@@ -35,6 +35,21 @@ int main() {
 
     tree.print_nodes();
 
+    tree.build_tree();
+
+    vector<double> point;
+    point.push_back(3); point.push_back(3);
+    tree_2d::KDNodes k_nearest_result;    // std::vector<KDNode_ptr>, std::vector<node_2d::ptr>
+    unsigned int K = 2;
+    bool find = tree.search_knn(point, K, k_nearest_result);
+    cout<<"find->"<<find<<endl;
+    cout<<"k_nearest_result.size->"<<k_nearest_result.size()<<endl;
+    for(tree_2d::KDNodes::size_type i =0; i<k_nearest_result.size(); ++i) {
+        cout<<k_nearest_result.at(i).use_count()<<endl;
+        //k_nearest_result.at(i)->print();
+    }
+
+
 /*    
     vector<double> a; a.push_back(2); a.push_back(2);
     //node_2d(a, 2);
@@ -43,3 +58,4 @@ int main() {
 */
 
 }
+
