@@ -85,8 +85,10 @@ public:
         kd_nodes.clear();
     }
 
-    void print_nodes();
+    void print_nodes();                 /* to see the data of the kd-tree */
     
+    void print_tree();                  /* to see the node relation of the kd-tree */
+
     bool build_tree();                                                       /* build kd-tree */
 
     bool search_knn(FEATURE_TYPE feature, size_t k, KDNodes &k_nearest_result);  /* search k nearest nodes, and store to k_nearst_result */
@@ -94,6 +96,8 @@ public:
 private:
 
     KDNode_ptr make_kdtree(KDNodes &nodes, int depth);   /* make tree  with the root node */
+
+    void print_tree_relation(KDNode_ptr root);
 
     template <typename PriorityQueue>
     static void knearest(const FEATURE_TYPE &feature, const KDNode_ptr &currentNode, size_t k, DISTANCE &dist, PriorityQueue &result);
@@ -116,11 +120,26 @@ typename kdtree<FEATURE_TYPE, CATEGORY_TYPE, DISTANCE, K_DIM>::KDNode_ptr kdtree
     KDNodes left_nodes(nodes.begin(), nodes.begin() + median);
     KDNodes right_nodes(nodes.begin() + median + 1, nodes.end());
 
+/*
+    // to test
+    std::cout<<"left_nodes.size->"<<left_nodes.size()<<std::endl;
+    std::cout<<"right_nodes.size->"<<right_nodes.size()<<std::endl;
+*/
+
     KDNode_ptr root = nodes.at(median);
     root->axis = axis;
 
     root->left  = make_kdtree(left_nodes,  depth + 1);
     root->right = make_kdtree(right_nodes, depth + 1);
+/*
+    // to test
+    if (root->left && root->right)
+        std::cout<<"-root->category:"<<root->category<<"-left->category:"<<root->left->category<<"-right->category:"<<root->right->category<<std::endl;
+    else if (root->left)
+        std::cout<<"-root->category:"<<root->category<<"-left->category:"<<root->left->category<<std::endl;
+    else if (root->right)
+        std::cout<<"-root->category:"<<root->category<<"-right->category:"<<root->right->category<<std::endl;
+*/
 
     return root;
 }
@@ -144,14 +163,18 @@ bool kdtree<FEATURE_TYPE, CATEGORY_TYPE, DISTANCE, K_DIM>::search_knn(FEATURE_TY
     }
     DISTANCE distance;
     MaxPriorityQueue queue_tmp;
-    //knearest(const FEATURE_TYPE &feature, const KDNode_ptr &currentNode, size_t k, DISTANCE &dist, PriorityQueue &result)
     knearest(feature, root, k, distance, queue_tmp);
     typename MaxPriorityQueue::size_type size = queue_tmp.size();
     k_nearest_result.resize(size);
-    for(typename KDNodes::size_type i=size; i>-1; --i) {
+    for(typename KDNodes::size_type i=0; i<size; ++i) {    // be careful of the unsigned type
         // reverse order, typedef std::pair<double, KDNode_ptr> DistanceTuple;
-        k_nearest_result[i] = (queue_tmp.top().second);
-        std::cout<<k_nearest_result[i].use_count()<<std::endl;
+        k_nearest_result[size - i -1] = (queue_tmp.top().second);
+/*        
+        // to test
+        std::cout<<"search_knn.[size - i -1]->"<<i<<std::endl;
+        std::cout<<"result_tmp.top.second->"<<(queue_tmp.top()).second->category<<std::endl;
+        std::cout<<"k_nearest_result[size - i -1].use_count->"<<k_nearest_result[size - i -1].use_count()<<std::endl;
+*/
         queue_tmp.pop();
     }
     return true;
@@ -183,6 +206,12 @@ void kdtree<FEATURE_TYPE, CATEGORY_TYPE, DISTANCE, K_DIM>::knearest(const FEATUR
         }
     }
 
+/*
+    // to test
+    std::cout<<"currentNode->category"<<currentNode->category<<std::endl;
+    std::cout<<"result.size->"<<result.size()<<"-result.top.first->"<<result.top().first<<"-result.top.second->"<<(result.top()).second->category<<std::endl;
+*/
+
     KDNode_ptr near = (false == d_axis ? currentNode->left : currentNode->right);
     KDNode_ptr far  = (false == d_axis ? currentNode->right : currentNode->left);
 
@@ -195,6 +224,25 @@ void kdtree<FEATURE_TYPE, CATEGORY_TYPE, DISTANCE, K_DIM>::knearest(const FEATUR
     return;
 }
 
+template <typename FEATURE_TYPE, typename CATEGORY_TYPE, typename DISTANCE, int K_DIM>
+void kdtree<FEATURE_TYPE, CATEGORY_TYPE, DISTANCE, K_DIM>::print_tree() {
+    print_tree_relation(root);
+}
+
+template <typename FEATURE_TYPE, typename CATEGORY_TYPE, typename DISTANCE, int K_DIM>
+void kdtree<FEATURE_TYPE, CATEGORY_TYPE, DISTANCE, K_DIM>::print_tree_relation(KDNode_ptr root) {
+    if (!root) 
+        return;
+    if (root->left && root->right)
+        std::cout<<"root->axis:"<<root->axis<<" | "<<"-root->category:"<<root->category<<"-left->category:"<<root->left->category<<"-right->category:"<<root->right->category<<std::endl;
+    else if (root->left)
+        std::cout<<"root->axis:"<<root->axis<<" | "<<"-root->category:"<<root->category<<"-left->category:"<<root->left->category<<std::endl;
+    else if (root->right)
+        std::cout<<"root->axis:"<<root->axis<<" | "<<"-root->category:"<<root->category<<"-right->category:"<<root->right->category<<std::endl;
+
+    print_tree_relation(root->left);
+    print_tree_relation(root->right);
+}
 
 /** reference: 
 #include <algorithm>
@@ -256,8 +304,23 @@ void kdtree<FEATURE_TYPE, CATEGORY_TYPE, DISTANCE, K_DIM>::knearest(const FEATUR
             node_2d::ptr n_i(new node_2d(data.at(i), target.at(i)));
             tree.add(n_i);
         }
+     
+        // tree.print_nodes(); // to test
 
-        tree.print_nodes();
+        tree.build_tree();
+        // tree.print_tree();  // to test, different category needed, just see the tree structrue
+
+        vector<double> point;
+        point.push_back(3); point.push_back(3);
+        tree_2d::KDNodes k_nearest_result;    // std::vector<KDNode_ptr>, std::vector<node_2d::ptr>
+        unsigned int K = 2;
+        bool find = tree.search_knn(point, K, k_nearest_result);
+        cout<<"find->"<<find<<endl;
+        cout<<"k_nearest_result.size->"<<k_nearest_result.size()<<endl;
+        for(tree_2d::KDNodes::size_type i =0; i<k_nearest_result.size(); ++i) {
+            // cout<<k_nearest_result.at(i).use_count()<<endl;
+            k_nearest_result.at(i)->print();
+        }
 
     }
 */

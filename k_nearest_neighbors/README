@@ -1,4 +1,5 @@
 # this is a program of the algorithm of k nearest neighbors
 # reference to:
 《统计学习方法》——李航著
-https://github.com/justdark/dml/tree/master/dml/KNN which is a example of python
+https://github.com/gvd/kdtree/  which is a K-d tree implementation in C++ for NN and KNN search
+https://github.com/justdark/dml/tree/master/dml/KNN  which is a example of python
