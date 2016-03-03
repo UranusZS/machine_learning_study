@@ -4,4 +4,5 @@ The main reference book is 《统计学习方法》by 李航, or other books or 
 
 table of contents:    
 perception          -> the case of perception model forked by 20160223    
-k nearest neighbors -> the case of knn forked by 20160301    
+k_nearest_neighbors -> the case of knn forked by 20160301    
+naive_bayes         -> the case of Naive Bayes forked by 20160303      
