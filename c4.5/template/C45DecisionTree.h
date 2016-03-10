@@ -40,6 +40,7 @@ typedef struct _C45TreeNode {
 	// children
 	std::vector<_C45TreeNode*> children;
 	_C45TreeNode(bool leaf=false, class_id cat=0, feature_id f=UNUSED_FEATURE_ID) : is_leaf(leaf), category(cat), fid(f) {}
+    ~_C45TreeNode() {}
 	// functions
 	void set(bool leaf, class_id cat, feature_id f=UNUSED_FEATURE_ID);
 } C45TreeNode;
@@ -86,9 +87,10 @@ private:
 };
 
 C45DecisionTree::C45DecisionTree() {
-	//
+    root = new C45TreeNode();
 }
 C45DecisionTree::~C45DecisionTree() {
+    delete root;
 	clear();
 }
 
@@ -348,7 +350,7 @@ void C45DecisionTree::printData() {
 	std::cout<<"The training data:"<<std::endl;
 	for(i=0; i<d_size; ++i) {
 		std::cout<<"input->"<<i<<"----";
-		for(j=0; j<d_size; ++j) {
+		for(j=0; j<input_vec.at(i).size(); ++j) {
 			std::cout<<"f"<<j<<":"<<input_vec.at(i).at(j)<<" ";
 		}
 		std::cout<<" label->"<<label_vec.at(i)<<std::endl;

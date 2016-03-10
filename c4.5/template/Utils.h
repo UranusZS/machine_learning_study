@@ -163,7 +163,7 @@ T getMaxCountT(typename std::vector< T > &label) {
 	for(auto i=0; i<size; ++i) {
 		it = label_cnt_map.find(label.at(i));
 		if (it != label_cnt_map.end()) {
-			auto count = it->second;
+			auto count = it->second + 1;
 			if(count > max_label_cnt) {
 				max_label_cnt = count;
 				max_label = it->first;
