@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include "Utils.h"
+#include "C45DecisionTree.h"
 
 using namespace std;
 
@@ -10,6 +11,21 @@ int main() {
     // having house: 1 yes 2 no
     // credit conditions: 1 -> normal 2 -> good 3 very good
     // class: 1 -> yes 2 no
+
+    vector<Feature> age_vec;
+    age_vec.push_back(1); age_vec.push_back(2); age_vec.push_back(3);
+    vector<Feature> job_vec;
+    job_vec.push_back(1); job_vec.push_back(2);
+    vector<Feature> house_vec;
+    house_vec.push_back(1); house_vec.push_back(2);
+    vector<Feature> credit_vec;
+    credit_vec.push_back(1); credit_vec.push_back(2); credit_vec.push_back(3);
+
+    vector< vector<Feature> > feature_table;
+    feature_table.push_back(age_vec);
+    feature_table.push_back(job_vec);
+    feature_table.push_back(house_vec);
+    feature_table.push_back(credit_vec);
 
     const unsigned att_num = 4;
     const unsigned rule_num = 15;
@@ -56,6 +72,17 @@ int main() {
             cout<<"    "<<input_vec.at(i).at(j)<<endl;
         }
         cout<<"    "<<label_vec.at(i)<<endl;
+    }
+
+    // init data
+    C45DecisionTree c45tree;
+
+    for(auto i=0; i<feature_table.size(); ++i) {
+        c45tree.addFeature(feature_table.at(i));
+    }
+
+    for(auto i=0; i<input_vec.size(); ++i) {
+        c45tree.addData(input_vec.at(i), label_vec.at(i));
     }
 
     cout<<endl;

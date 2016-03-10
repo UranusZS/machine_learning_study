@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 
 #include "Utils.h"
 
@@ -37,10 +38,17 @@ typedef struct _C45TreeNode {
 	class_id category;
 	feature_id fid;
 	// children
-	std::vector<C45TreeNode*> children;
+	std::vector<_C45TreeNode*> children;
+	_C45TreeNode(bool leaf=false, class_id cat=0, feature_id f=UNUSED_FEATURE_ID) : is_leaf(leaf), category(cat), fid(f) {}
 	// functions
-	void set(bool leaf, class_id cat, feature_id f=UNUSED_FEATURE_ID) : is_leaf(leaf), category(cat), fid(f) {}
+	void set(bool leaf, class_id cat, feature_id f=UNUSED_FEATURE_ID);
 } C45TreeNode;
+
+void C45TreeNode::set(bool leaf, class_id cat, feature_id f) {
+	is_leaf = leaf;
+	category = cat;
+	fid = f;
+}
 
 /**
  * class C45DecisionTree
@@ -58,6 +66,8 @@ public:
 	void addData(std::vector< Feature > &input, Label &l);
 	void addFeature(std::vector<Feature> &f_vec);
 	void clear();
+
+	void printData();
 private:
 	C45TreeNode* root;        /* the Decision Tree root */
 	double epsilon;           /* threshold of the gain */
@@ -67,13 +77,20 @@ private:
 	std::vector< std::vector<Feature> > feature_table;   /* to describe feature values */
 	std::vector< std::vector< Feature > > input_vec;     /* input of the labeled data */
 	std::vector<Label> label_vec;                        /* label of the labeled data */
-	std::vector<feature_id> feature_vec;                 /* feature ids of the data */
+	//std::vector<feature_id> feature_vec;                 /* feature ids of the data */
 
 	/* calculate the Info Gain Ratio of each feature split*/
-	void calculateInfoGainRatio(std::map< Feature, size_t > &f_count_map, std::map< Label, size_t > &c_count_map, std::map< Feature, std::map< Label, size_t > > &f_c_count_map, std::vector<feature_id> &unused_feature, size_t D, std::vector<double> &result);
+	void calculateInfoGainRatio(std::map< feature_id, std::map< Feature, size_t > > &fv_count_map, std::map< Label, size_t > &c_count_map, std::map< feature_id, std::map< Feature, std::map< Label, size_t > > > &fv_c_count_map, std::vector<feature_id> &unused_feature, size_t D, std::vector<double> &result);
 	/* split the input data by the given feature */
-	bool splitByFeature(std::vector< std::vector< Feature > > &input, std::vector< Label > &label, feature_id f_index, std::map< Feature, std::vector<Feature> > &input_split_map, std::map< Feature, std::vector<Label> > &label_split_map);
+	bool splitByFeature(std::vector< std::vector< Feature > > &input, std::vector< Label > &label, feature_id f_index, std::map< Feature, std::vector< std::vector<Feature> > > &input_split_map, std::map< Feature, std::vector<Label> > &label_split_map);
 };
+
+C45DecisionTree::C45DecisionTree() {
+	//
+}
+C45DecisionTree::~C45DecisionTree() {
+	clear();
+}
 
 Label C45DecisionTree::predict(std::vector<Feature> &input) {
 	feature_id fid = root->fid;
@@ -86,6 +103,7 @@ Label C45DecisionTree::predict(std::vector<Feature> &input) {
  * train the tree according to the given training data 
  */
 bool C45DecisionTree::train() {
+	std::vector<feature_id> feature_vec(feature_table.size(), 0);
 	return makeTree(root, input_vec, label_vec, feature_vec);
 }
 
@@ -113,7 +131,6 @@ void C45DecisionTree::clear() {
 	feature_table.clear();
 	input_vec.clear();
 	label_vec.clear();
-	feature_vec.clear();
 }
 
 /**
@@ -124,7 +141,7 @@ void C45DecisionTree::clear() {
  * @param std::vector<feature_id> &feature_used          the feature can be used to classify
  * @return boolean                                       true for success build the tree
  */
-bool makeTree(C45TreeNode* node,                                       \
+bool C45DecisionTree::makeTree(C45TreeNode* node,                                       \
 				std::vector< std::vector< Feature > > &input,   \
 				std::vector< Label > &label,                    \
 				std::vector<feature_id> &feature_used) {        
@@ -151,9 +168,9 @@ bool makeTree(C45TreeNode* node,                                       \
 	}
 
 	// unused feature is empty
-	if(empty(feature_used)) {
-		l0 = getMaxCountLabel(label);
-		node->set(true, l0, UNUSED_FEATURE_ID)
+	if(feature_used.empty()) {
+		l0 = getMaxCountT(label);
+		node->set(true, l0, UNUSED_FEATURE_ID);
 		return true;
 	}
 
@@ -161,33 +178,35 @@ bool makeTree(C45TreeNode* node,                                       \
 	auto f_size = feature_used.size();
 	std::vector<double> feature_gain(f_size, 0.0);
 
-	std::map< Feature, size_t > f_count_map;
-	std::map< Feature, std::map< Label, size_t > > f_c_count_map;
+	std::map< feature_id, std::map< Feature, size_t > > fv_count_map;
 	std::map< Label, size_t > c_count_map;
-	countFeatureAndLabel(input, label, feature_used, f_count_map, c_count_map, f_c_count_map);
-	calculateInfoGainRatio(f_count_map, c_count_map, f_c_count_map, feature_used, i_size, feature_gain);
+	std::map< feature_id, std::map< Feature, std::map< Label, size_t > > > fv_c_count_map;
 
+	countAllFeatureAndLabel(input, label, feature_used, fv_count_map, c_count_map, fv_c_count_map);
+	this->calculateInfoGainRatio(fv_count_map, c_count_map, fv_c_count_map, feature_used, i_size, feature_gain);
+
+///s
 	size_t max_gain_feature = 0;
 	double max_gain = 0.0;
 	for(auto i=0; i<f_size; i++) {
 		if(feature_gain.at(i) > max_gain) {
 			max_gain = feature_gain.at(i);
-			max_gain_feature = unused_feature.at(i);
+			max_gain_feature = feature_used.at(i);
 		}
 	}
 
 	// if max_gain < epsilon, then single node tree get
 	if(max_gain < epsilon) {
-		l0 = getMaxCountLabel(label);
+		l0 = getMaxCountT(label);
 		node->set(true, l0, UNUSED_FEATURE_ID);
 		return true;
 	}
 
 	// max_gain >= epsilon, build the tree
-	l0 = getMaxCountLabel(label);
+	l0 = getMaxCountT(label);
 	node->set(true, l0, max_gain_feature);
 
-	std::map< Feature, std::vector<Feature> > input_map;
+	std::map< Feature, std::vector< std::vector<Feature> > > input_map;
 	std::map< Feature, std::vector<Label> > label_map;
 
 	// get the feature remained
@@ -202,7 +221,7 @@ bool makeTree(C45TreeNode* node,                                       \
 	// split by max_gain_feature
 	splitByFeature(input, label, max_gain_feature, input_map, label_map);
 	// build each subtree
-	std::map< Feature, std::vector<Feature> >::iterator f_it;
+	std::map< Feature, std::vector< std::vector<Feature> > >::iterator f_it;
 	Feature f;
 	for(f_it=input_map.begin(); f_it!=input_map.end(); ++f_it) {
 		f = f_it->first;
@@ -215,10 +234,20 @@ bool makeTree(C45TreeNode* node,                                       \
 	return true;
 }
 
-bool C45DecisionTree::splitByFeature(std::vector< std::vector< Feature > > &input,  \
-			std::vector< Label > &label,                                            \
-			feature_id f_index,                                                     \    
-			std::map< Feature, std::vector<Feature> > &input_split_map,             \
+/**
+ * split the data into different parts according to the feature values of the given feature
+ * @param std::vector< std::vector< Feature > > &input,
+ * @param std::vector< Label > &label
+ * @param feature_id f_index,
+ * 
+ * @return std::map< Feature, std::vector<Feature> > &input_split_map
+ * @return std::map< Feature, std::vector<Label> > &label_split_map
+ * 
+ */
+bool C45DecisionTree::splitByFeature(std::vector< std::vector< Feature > > &input, 
+			std::vector< Label > &label,                                           
+			feature_id f_index,                                                        
+			std::map< Feature, std::vector< std::vector<Feature> > > &input_split_map,          
 			std::map< Feature, std::vector<Label> > &label_split_map
 			) {
 	if(input.size() != label.size()) {
@@ -227,11 +256,12 @@ bool C45DecisionTree::splitByFeature(std::vector< std::vector< Feature > > &inpu
 
 	input_split_map.clear();
 	label_split_map.clear();
-	std::map< Feature, std::vector< std::vector< Feature > > >::iterator f_it;
+
+	std::map< Feature, std::vector< std::vector<Feature> > >::iterator f_it;
 	std::map< Feature, std::vector<Label> >::iterator l_it;
 
 	auto size = input.size();
-	for(auto i=0; i<size(); ++i) {
+	for(auto i=0; i<size; ++i) {
 		Feature f = input.at(i).at(f_index);
 		// input process & label process, for the reason of the feature
 		f_it = input_split_map.find(f);
@@ -242,7 +272,7 @@ bool C45DecisionTree::splitByFeature(std::vector< std::vector< Feature > > &inpu
 
 			std::vector<Label> l_tmp;
 			l_tmp.push_back(label.at(i));
-			label_split_map.insert(std::pair<Feature, std::vector<Lable> >(f, l_tmp));
+			label_split_map.insert(std::pair<Feature, std::vector<Label> >(f, l_tmp));
 		} else {                                                // already added
 			input_split_map[f].push_back(input.at(i));
 			label_split_map[f].push_back(label.at(i));
@@ -251,7 +281,24 @@ bool C45DecisionTree::splitByFeature(std::vector< std::vector< Feature > > &inpu
 	return true;
 }
 
-void C45DecisionTree::calculateInfoGainRatio(std::map< Feature, size_t > &f_count_map, std::map< Label, size_t > &c_count_map, std::map< Feature, std::map< Label, size_t > > &f_c_count_map, std::vector<size_t> &unused_feature, size_t D, std::vector<double> &result) {
+/**
+ * calculate the Info Gain Ratio of each feature
+ *
+ * @param std::map< feature_id, std::map< Feature, size_t > > &fv_count_map
+ * @param std::map< Label, size_t > &c_count_map
+ * @param std::map< feature_id, std::map< Feature, std::map< Label, size_t > > > &fv_c_count_map
+ * @param D, size of the data vector
+ * 
+ * @return std::vector<double> &result, the gain vector result
+ */
+void C45DecisionTree::calculateInfoGainRatio(
+		std::map< feature_id, std::map< Feature, size_t > > &fv_count_map, 
+		std::map< Label, size_t > &c_count_map, 
+		std::map< feature_id, std::map< Feature, std::map< Label, size_t > > > &fv_c_count_map, 
+		std::vector<feature_id> &unused_feature, 
+		size_t D, 
+		std::vector<double> &result) {
+
 	auto f_size = unused_feature.size();
 	result.resize(f_size, 0);
 
@@ -265,13 +312,21 @@ void C45DecisionTree::calculateInfoGainRatio(std::map< Feature, size_t > &f_coun
 		double G_D_A = 0.0;   /* G(D|A) = H(D) - H(D|A) */
 		double Gr_D_A = 0.0;  /* Gr(D|A) = G(D|A) / H(D) */
 
-		for(c_it=f_count_map.begin(); c_it!=f_count_map.end(); ++c_it) {
+		feature_id fid = unused_feature.at(i);
+		typename std::shared_ptr< std::map< Feature, size_t > > f_p(& fv_count_map[fid]);
+		typename std::shared_ptr< std::map< Feature, std::map< Label, size_t > > > f_c_p(& fv_c_count_map[fid]);
+
+		if (0 == f_p.use_count() || 0 == f_c_p.use_count()) {
+			continue;
+		}
+
+		for(c_it=c_count_map.begin(); c_it!=c_count_map.end(); ++c_it) {
 			double percent = static_cast<double>(c_it->second) / D;
 			H_D += percent * log(percent);
 		}
 
-		for(f_l_it=f_c_count_map.begin(); f_l_it!=f_c_count_map.end(); ++f_l_it) {
-			auto Di = f_count_map[f_l_it->first];
+		for(f_l_it=f_c_p->begin(); f_l_it!=f_c_p->end(); ++f_l_it) {
+			auto Di = fv_count_map[fid][f_l_it->first];
 			double tmp = 0;
 			for(l_it=f_l_it->second.begin(); l_it!=f_l_it->second.end(); ++l_it) {
 				double percent = static_cast<double>(l_it->second) / Di;
@@ -286,6 +341,30 @@ void C45DecisionTree::calculateInfoGainRatio(std::map< Feature, size_t > &f_coun
 	}
 }
 
+void C45DecisionTree::printData() {
+	auto d_size = input_vec.size();
+	auto i = d_size;
+	auto j = d_size;
+	std::cout<<"The training data:"<<std::endl;
+	for(i=0; i<d_size; ++i) {
+		std::cout<<"input->"<<i<<"----";
+		for(j=0; j<d_size; ++j) {
+			std::cout<<"f"<<j<<":"<<input_vec.at(i).at(j)<<" ";
+		}
+		std::cout<<" label->"<<label_vec.at(i)<<std::endl;
+	}
+
+	std::cout<<"The feature and possible values:"<<std::endl;
+	auto f_size = feature_table.size();
+	auto fv = f_size;
+	for(fv=0; fv<f_size; ++fv) {
+		std::cout<<"feature:"<<fv<<std::endl;
+		for(auto v_i=0; v_i<feature_table.at(fv).size(); ++v_i) {
+			std::cout<<feature_table.at(fv).at(v_i)<<" ";
+		}
+		std::cout<<std::endl;
+	}
+}
 
 #endif
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
