@@ -19,6 +19,7 @@ public:
     size_t T;                                      /* time sequence */
     std::vector<size_t> O_vec;                     /* observation sequence */
     void init(size_t _T);
+    void setO(std::vector<size_t> _O_vec);
 };
 void ForwardHMM::init(size_t _T) {
     T = _T;
@@ -29,6 +30,9 @@ void ForwardHMM::init(size_t _T) {
         alpha_vec[i].resize(T+1);
     }
 }
+void ForwardHMM::setO(std::vector<size_t> _O_vec) {
+    O_vec = _O_vec;
+}
 
 class BackwardHMM {
 public:
@@ -37,6 +41,7 @@ public:
     size_t T;                                     /* time sequence */
     std::vector<size_t> O_vec;                    /* observation sequence */
     void init(size_t _T);
+    void setO(std::vector<size_t> _O_vec);
 };
 void BackwardHMM::init(size_t _T) {
     T = _T;
@@ -46,6 +51,9 @@ void BackwardHMM::init(size_t _T) {
     for(size_t i=1; i<T+1; ++i) {
         beta_vec[i].resize(T+1);
     }
+}
+void BackwardHMM::setO(std::vector<size_t> _O_vec) {
+    O_vec = _O_vec;
 }
 
 class ViterbiHMM {
@@ -58,6 +66,7 @@ public:
     std::vector<size_t> O_vec;                     /* observation sequence */
     std::vector<size_t> Q_vec;                     /* the state sequence of the maximum probability path, indexes of the path */
     void init(size_t _T, size_t _N);
+    void setO(std::vector<size_t> _O_vec);
 };
 void ViterbiHMM::init(size_t _T, size_t _N) {
     T = _T;
@@ -66,6 +75,60 @@ void ViterbiHMM::init(size_t _T, size_t _N) {
     Q_vec.resize(T+1);
     delta_vec.resize(N+1);
     psi.resize(N+1);
+}
+void ViterbiHMM::setO(std::vector<size_t> _O_vec) {
+    O_vec = _O_vec;
+}
+
+class BaumWelchHMM {
+public:
+    size_t N;                                      /* the number of possible hidden states */
+    size_t T;                                      /* time sequence */
+    std::vector<size_t> O_vec;                     /* observation sequence */
+    std::vector< std::vector<double> > gamma_vec;
+    double delta;
+    size_t l;
+    void init(size_t _T, size_t _N, double d=0.001);
+    void setO(std::vector<size_t> _O_vec);
+    bool computeGamma(std::vector< std::vector<double> > &alpha_vec, std::vector< std::vector<double> > &beta_vec);
+};
+void BaumWelchHMM::init(size_t _T, size_t _N, double d) {
+    T = _T;
+    N = _N;
+    delta = d;
+    O_vec.resize(T+1);
+    gamma_vec.resize(T+1);
+    for(size_t i=0; i<=T; ++i) {
+        gamma_vec[i].resize(N+1);
+    }
+}
+void BaumWelchHMM::setO(std::vector<size_t> _O_vec) {
+    O_vec = _O_vec;
+}
+bool BaumWelchHMM::computeGamma(std::vector< std::vector<double> > &alpha_vec, std::vector< std::vector<double> > &beta_vec) {
+    if(alpha_vec.size() != T+1) {
+        return false;
+    }
+    if(beta_vec.size() != T+1) {
+        return false;
+    }
+    size_t i, j;
+    size_t t;
+    double denominator;
+    for(t=1; t<=T; ++t) {
+        if((alpha_vec[t].size() != beta_vec[t].size()) && (alpha_vec[t].size() != N+1)) {
+            return false;
+        }
+        denominator = 0.0;
+        for(j=0; j<=N; ++j) {
+            gamma_vec[t][j] = alpha_vec[t][j] * beta_vec[t][j];
+            denominator += gamma_vec[t][j];
+        }
+        for(i=1; i<=N; ++i) {
+            gamma_vec[t][j] = gamma_vec[t][j] / denominator;
+        }
+    }
+    return true;
 }
 
 template<typename STATE, typename OBSERVATION>
@@ -81,8 +144,10 @@ public:
     // main algorithms
     void Forward(ForwardHMM *hmm);
     void Backward(BackwardHMM *hmm);
-    void BaumWelch();
+    void BaumWelch(BaumWelchHMM *hmm);
     void Viterbi(ViterbiHMM *hmm);
+protected:
+    void computeKsi(BaumWelchHMM *hmm, std::vector< std::vector<double> > &alpha_vec, std::vector< std::vector<double> > &beta_vec, std::vector< std::vector< std::vector<double> > > &ksi_vec);
 private:
     // the states and symbols
     std::vector<STATE> Q_vec;            /* set of states Q */
@@ -312,6 +377,93 @@ void HMM<STATE, OBSERVATION>::Viterbi(ViterbiHMM *hmm) {
     for(t=hmm->T-1; t>=1; --t) {
         hmm->Q_vec[t] = hmm->psi[t+1][hmm->Q_vec[t+1]];
     }
+}
+template<typename STATE, typename OBSERVATION>
+void HMM<STATE, OBSERVATION>::computeKsi(BaumWelchHMM *hmm, std::vector< std::vector<double> > &alpha_vec, std::vector< std::vector<double> > &beta_vec, std::vector< std::vector< std::vector<double> > > &ksi_vec) {
+    size_t i, j;
+    size_t t;
+    double sum;
+
+    for(t=1; t<=hmm->T; ++t) {
+        sum = 0.0;
+        for(i=1; i<=N; ++i) {
+            for(j=1; j<=N; ++j) {
+                ksi_vec[t][i][j] = alpha_vec[t][i] * A[i][j] * B[j][hmm->O_vec[t+1]]* beta_vec[t+1][j];
+                sum += ksi_vec[t][i][j];
+            }
+        }
+        // for probability
+        for(i=1; i<=N; ++i) {
+            for(j=1; j<=N; ++j) {
+                ksi_vec[t][i][j] = ksi_vec[t][i][j] / sum;
+            }
+        }
+    }
+}
+
+template<typename STATE, typename OBSERVATION>
+void HMM<STATE, OBSERVATION>::BaumWelch(BaumWelchHMM *hmm) {
+    ForwardHMM *forward;
+    forward->init(hmm->T);
+    forward->setO(hmm->O_vec);
+    BackwardHMM *backward;
+    backward->init(hmm->T);
+    backward->setO(hmm->O_vec);
+    std::vector< std::vector< std::vector<double> > > ksi_vec;
+    // calculate forward and backward
+    Forward(forward);
+    Backward(backward);
+    // calculate gamma
+    hmm->computeGamma(forward->alpha_vec, backward->beta_vec);
+    // calculate ksi
+    computeKsi(hmm, forward->alpha_vec, backward->beta_vec, ksi_vec);
+    double  numeratorA, denominatorA;
+    double  numeratorB, denominatorB;
+    double delta = 1, probprev=0;
+    size_t i, j, t, k;
+    hmm->l = 0;
+    do {
+        hmm->l ++;
+        // /* reestimate frequency of state i in time t=1 */
+        for(i=1; i<=N; ++i) {
+            pi[i] = hmm->gamma_vec[1][i];
+        }
+        // /* reestimate transition matrix  and symbol prob in each state */
+        for(i=1; i<=N; ++i) {
+            denominatorA = 0.0;
+            for(t=1; t<hmm->T; ++t) {    // calculat denominatorA of Aij
+                denominatorA += hmm->gamma_vec[t][i];
+            }
+            for(j=1; j<=N; ++j) {
+                numeratorA = 0.0;
+                for (t=1; t<hmm->T; ++t) {
+                    numeratorA += ksi_vec[t][i][j];
+                }
+                A[i][j] = numeratorA / denominatorA;
+            }
+            denominatorB = denominatorA + hmm->gamma_vec[hmm->T][i];
+            for(k=1; k<=M; ++k) {
+                numeratorB = 0.0;
+                for(t=1; t<=hmm->T; ++t) {
+                    if(k == hmm->O_vec[t]) {
+                        numeratorB += hmm->gamma_vec[t][i];
+                    }
+                }
+                B[i][k] = numeratorB/denominatorB;
+            }
+        }
+        // /* compute difference between log probability of two iterations */
+        Forward(forward);
+        Backward(backward);
+        // update gamma
+        hmm->computeGamma(forward->alpha_vec, backward->beta_vec);
+        // update ksi
+        computeKsi(hmm, forward->alpha_vec, backward->beta_vec, ksi_vec);
+        // compute difference between probability of two iterations
+        delta = forward->pprob - probprev;
+        probprev = delta;
+    } while(delta > hmm->delta); /* if probability does not change much, exit */
+
 }
 
 
