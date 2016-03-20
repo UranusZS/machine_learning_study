@@ -6,5 +6,6 @@ table of contents:
 perception          -> the case of perception model forked by 20160223    
 k_nearest_neighbors -> the case of knn forked by 20160301    
 naive_bayes         -> the case of Naive Bayes forked by 20160303        
-c4.5                -> the case of c4.5 decision tree forked by 20160312
-HMM                 -> the case of hidden Markov model forked by 20160320
+c4.5                -> the case of c4.5 decision tree forked by 20160312    
+HMM                 -> the case of hidden Markov model forked by 20160320  
+SVM                 -> 
