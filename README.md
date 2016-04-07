@@ -11,4 +11,5 @@ HMM                 -> the case of hidden Markov model forked by 20160320
 SVM                 -> perhaps the libsvm is better, will study future    
 LogisticRegression  -> the case of the logistic regression algorithm of
 stochastic gradient descent method    
+AdaBoost            -> the case of the adaboost algorithm     
 
