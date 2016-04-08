@@ -1,5 +1,5 @@
 /*************************************************************************
-	> File Name: decision_dump.h
+	> File Name: decision_stump.h
 	> Author: ZS
 	> Mail: dragon_201209@126.com
 	> @date April 7, 2016 9:25:45 PM
@@ -10,11 +10,11 @@
 
 #include <vector>
 
-class DecisionDump {
+class DecisionStump {
 public:
     // constuct and destruct function
-    DecisionDump();
-    ~DecisionDump();
+    DecisionStump();
+    ~DecisionStump();
 
     // set the members' value
     void set(int index, double threshold, double output_right, double output_left, double error = 0);
@@ -36,13 +36,13 @@ private:
     double _error;
 };
 
-DecisionDump::DecisionDump() : _index(-1), _error(-1.0) {
+DecisionStump::DecisionStump() : _index(-1), _error(-1.0) {
 }
 
-DecisionDump::~DecisionDump() {
+DecisionStump::~DecisionStump() {
 }
 
-void DecisionDump::set(int index, double threshold, double output_right, double output_left, double error) {
+void DecisionStump::set(int index, double threshold, double output_right, double output_left, double error) {
     _index        = index;
     _threshold    = threshold;
     _output_right = output_right;
@@ -50,34 +50,34 @@ void DecisionDump::set(int index, double threshold, double output_right, double 
     _error        = error;
 }
 
-double DecisionDump::evaluate(const double feature_value) const {
+double DecisionStump::evaluate(const double feature_value) const {
     if (feature_value > _threshold) {
         return _output_right;
     } 
     return _output_left;
 }
 
-double evaluate(const std::vector<FeatureElement> &ele_vec) const {
+double DecisionStump::evaluate(const std::vector<FeatureElement> &ele_vec) const {
     return evaluate(ele_vec.at(_index)); 
 }
 
-int DecisionDump::index() const {
+int DecisionStump::index() const {
     return _index;
 }
 
-double DecisionDump::threshold() const {
+double DecisionStump::threshold() const {
     return _threshold;
 }
 
-double DecisionDump::output_right() const {
+double DecisionStump::output_right() const {
     return _output_right;
 }
 
-double DecisionDump::output_left() const {
+double DecisionStump::output_left() const {
     return _output_left;
 }
 
-double DecisionDump::error() const {
+double DecisionStump::error() const {
     return _error;
 }
 
