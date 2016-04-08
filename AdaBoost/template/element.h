@@ -15,6 +15,9 @@
 struct FeatureElement {
     int    index;
     double value;
+    bool operator <(const FeatureElement &ele) const {
+    	return (index < ele.index);
+    }
 };
 
 struct Record {
