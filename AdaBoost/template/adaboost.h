@@ -1,32 +1,44 @@
 /*************************************************************************
-	> File Name: adaboost.h
-	> Author: ZS
-	> Mail: dragon_201209@126.com
+    > File Name: adaboost.h
+    > Author: ZS
+    > Mail: dragon_201209@126.com
     @date April 7, 2016 10:45:49 PM
  ************************************************************************/
 
 #ifndef ADABOOST_H
 #define ADABOOST_H
 
+#include "constant.h"
 #include "element.h"
 #include "iostream"
 #include <vector>
 #include <algorithm>
+
+enum BOOST_TYPE {
+    DISCRETE_TYPE = 1,
+    REAL_TYPE     = 2,
+    GENTLE_TYPE   = 3
+};
+
 
 class AdaBoost {
 public:
     AdaBoost();
     virtual ~AdaBoost();
 
-    void set_boosting_type(int boosting_type);
+    BOOST_TYPE get_boosting_type() const ;
+    void set_boosting_type(BOOST_TYPE boosting_type);
     void init();
 
     void add_record(Record &record);
     void sorted_sample(bool verbose = false);
     void set_record(std::vector<Record> &record_vec);
+    void init_weight();
 private:
     // the boosting type: 1 for Discrete AdaBoost, 2 for Real AdaBoost, and 4 for Gentle AdaBoost perhaps
-    int                 _boosting_type;
+    BOOST_TYPE          _boosting_type;
+    // the weight of each sample
+    std::vector<double> _sample_weight_vec;
 
     // training samples
     size_t              _total_sample;
@@ -45,7 +57,11 @@ AdaBoost::~AdaBoost() {
     //_sample_vec.clear();
 }
 
-void AdaBoost::set_boosting_type(int boosting_type) {
+BOOST_TYPE AdaBoost::get_boosting_type() const {
+    return _boosting_type;
+}
+
+void AdaBoost::set_boosting_type(BOOST_TYPE boosting_type) {
     _boosting_type = boosting_type;
 }
 
@@ -84,6 +100,14 @@ void AdaBoost::set_record(std::vector<Record> &record_vec) {
 
     _total_sample      = record_vec.size();
     _sample_vec        = record_vec;         
+}
+
+void AdaBoost::init_weight() {
+    _sample_weight_vec.resize(_total_sample);
+    double weight_0 = 1.0 / _total_sample;
+    for (size_t i = 0; i < _total_sample; ++i) {
+        _sample_weight_vec[i] = weight_0; 
+    }
 }
 
 /** // test

@@ -8,6 +8,7 @@
 #ifndef DECISION_DUMP_H
 #define DECISION_DUMP_H
 
+#include "element.h"
 #include <vector>
 
 class DecisionStump {
@@ -58,7 +59,7 @@ double DecisionStump::evaluate(const double feature_value) const {
 }
 
 double DecisionStump::evaluate(const std::vector<FeatureElement> &ele_vec) const {
-    return evaluate(ele_vec.at(_index)); 
+    return evaluate(ele_vec.at(_index).value); 
 }
 
 int DecisionStump::index() const {
