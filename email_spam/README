@@ -1,0 +1,11 @@
+# this is a test for email spam classifier    
+just a simple test, and I hope to learn the machine learning process by this
+simple example   
+
+The data is pulled from
+http://csmining.org/index.php/spam-email-datasets-.html      
+First, the extract process:   
+just extract by words, and stop words or html labels,   
+other techniques may be used, such as dom parser for html.    
+      
+
