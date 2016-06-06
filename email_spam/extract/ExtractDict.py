@@ -7,6 +7,7 @@ import email.parser
 import os, sys, stat
 import shutil
 import re
+import json
 
 
 # stop words list
@@ -20,6 +21,13 @@ file_html = "./html.txt"
 
 dir_train_files = "./train"
 
+word_min_count = 0 
+
+train_feature_result_file = "train_feature.json"
+
+test_feature_result_file = "test_feature.json"
+
+label_file = "SPAMTrain.label"
 
 def ExtractStopwords (filename):
     ''' Extract stop words from the file, one word one line
@@ -29,7 +37,7 @@ def ExtractStopwords (filename):
     if not os.path.exists(filename): #dest path doesnot exist
         print "ERROR: input file does not exist:", filename
         return words
-        #os.exit(1)
+        #os._exit(1)
     fp = open(filename)
     try:
         msg = fp.read()
@@ -60,7 +68,7 @@ def ExtractDict (filename, stop_words, word_dict, stop_words_in_words):
     if not os.path.exists(filename): #dest path doesnot exist
         print "ERROR: input file does not exist:", filename
         #return max_id, word_dict
-        os.exit(1)
+        os._exit(1)
 
     fp = open(filename)
     try:
@@ -127,7 +135,7 @@ def CalWordCounts (filename, stop_words_in_words, word_dict, count_dict):
     if not os.path.exists(filename): #dest path doesnot exist
         print "ERROR: input file does not exist:", filename
         #return max_id, word_dict
-        os.exit(1)
+        os._exit(1)
 
     fp = open(filename)
     try:
@@ -136,6 +144,7 @@ def CalWordCounts (filename, stop_words_in_words, word_dict, count_dict):
         # replace the stop words in msg into space, especially for html labels
         for rep in stop_words_in_words:
             strinfo = re.compile(rep)
+            #print msg
             msg = strinfo.sub(" ", msg)
 
         words = msg.split()
@@ -166,7 +175,7 @@ def LoadDictFromFile (filename, load_dict):
     if not os.path.exists(filename): #dest path doesnot exist
         print "ERROR: input file does not exist:", filename
         #return max_id, word_dict
-        os.exit(1)
+        os._exit(1)
 
     fp = open(filename, 'rb')
     try:
@@ -212,6 +221,72 @@ def DictFilterByCount(word_dict, count_dict, count, out_dict):
             continue
     #print out_dict 
     return out_dict
+
+def ExtractLabel(filename, out_label_dict):
+    ''' extract the label
+
+    '''
+    if not os.path.exists(filename): #dest path doesnot exist
+        print "ERROR: input file does not exist:", filename
+        #return max_id, word_dict
+        os._exit(1)
+
+    fp = open(filename, 'rb')
+    try:
+        list_of_lines = fp.readlines()
+        for line in list_of_lines:
+            if "\r\n" == line:
+                continue
+            lable_list = line.split()
+            out_label_dict[lable_list[1]] = lable_list[0]
+    finally:
+        fp.close()
+    return out_label_dict
+
+
+def SerializeToFile(fp, key_str, value_dict, label_dict):
+    ''' serialize the json to file
+        format label json_feature
+
+    '''
+    try:
+        count_dict = {key_str : value_dict}
+        out_str = json.dumps(count_dict)
+        if key_str in label_dict:
+            fp.write(label_dict[key_str])
+            fp.write("   ");
+        fp.write(out_str)
+        fp.write("\r\n")
+    except:
+        print("Warning SerializeToFile Exception")
+
+def CalFileWordCountsFromDir (f_dir, stop_words_in_words, word_dict, count, label_dict, result_out_dict, result_file = "feature_result.txt"):
+    ''' for each file in the f_dir, calculate the word counts and save to file with json format
+
+    '''
+    if not os.path.exists(f_dir): # dest path doesnot exist
+        os.makedirs(f_dir)  
+
+    fp = open(result_file, "wb")
+    files = os.listdir(f_dir)
+    for file in files:
+        f_path = os.path.join(f_dir, file)
+        f_info = os.stat(f_path)
+        if stat.S_ISDIR(f_info.st_mode): # for subfolders, recurse
+            CalFileWordCountsFromDir(f_path, stop_words_in_words, word_dict, count, label_dict, out_dict, result_file)
+        else:
+            count_dict = {}
+            CalWordCounts(f_path, stop_words_in_words, word_dict, count_dict)
+            count_result_dict = {}
+            for key, value in sorted(count_dict.iteritems(), key=lambda (k,v): (v,k)):
+                if value > count:
+                    count_result_dict[int(key)] = value
+                    #print key, value
+            SerializeToFile(fp, file, count_result_dict, label_dict)
+            result_out_dict[file] = count_result_dict
+    fp.close()
+
+
     
 
 # main function start here
@@ -235,9 +310,17 @@ CalWordCountsFromDir(dir_train_files, html_labels, word_dict, count_dict)
 #print count_dict
 
 final_dict = {}
-DictFilterByCount(word_dict, count_dict, 3, final_dict)
+DictFilterByCount(word_dict, count_dict, word_min_count, final_dict)
 DictToFile(file_dict_final, final_dict)
 #print final_dict
+
+label_dict = {}
+ExtractLabel(label_file, label_dict)
+#print label_dict
+
+file_words_count_dict = {}
+CalFileWordCountsFromDir(dir_train_files, html_labels, word_dict, word_min_count, label_dict, file_words_count_dict, train_feature_result_file)
+#print file_words_count_dict
 
 
 #LoadDictFromFile(file_dict, word_dict)
