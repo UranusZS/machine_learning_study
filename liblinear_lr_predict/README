@@ -1,0 +1,15 @@
+# this is a program of the prediction of the LR in the liblinear lib   
+# perhaps the python module included in the lib is better to use, this is just
+for study the prediction process    
+# example is the train data and the test data              
+# reference to:    
+...
+execute:    
+
+./train -s 0 example.txt.train model.txt    
+
+./predict example.txt.test lr_model.txt test.file    
+
+cat example.txt.test | python lr_model.py    
+    
+ 
