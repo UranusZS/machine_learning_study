@@ -12,4 +12,7 @@ SVM                 -> perhaps the libsvm is better, will study future
 LogisticRegression  -> the case of the logistic regression algorithm of
 stochastic gradient descent method    
 AdaBoost            -> the case of the adaboost algorithm     
-
+ftrl_proximal       -> ftrl proximal algorithm, a ref    
+email_spam          -> a naive bayes algorithm used for email spam detection    
+word2vec_comment    -> a comment in Chinese for word2vec    
+    
