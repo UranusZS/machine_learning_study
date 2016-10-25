@@ -46,6 +46,7 @@ char train_file[MAX_STRING], output_file[MAX_STRING];
 char save_vocab_file[MAX_STRING], read_vocab_file[MAX_STRING];
 
 // 声明词汇表结构体
+//@brief 输入文件中每个基本词的结构体数组,即paper中的vocabulary
 struct vocab_word *vocab;
 
 // binary      : 0则vectors.bin输出为二进制（默认），1则为文本形式
@@ -77,8 +78,15 @@ long long train_words = 0, word_count_actual = 0, iter = 5, file_size = 0, class
 // sample         : 亚采样概率的参数，亚采样的目的是以一定概率拒绝高频词，使得低频词有更多出镜率，默认为0，即不进行亚采样
 real alpha = 0.025, starting_alpha, sample = 1e-3;
 
-// syn0     : 单词的向量输入 concatenate word vectors
-// syn1     : hs(hierarchical softmax)算法中隐层节点到霍夫曼编码树非叶结点的映射权重
+//@brief
+//syn0即基本词的input feature vector 矩阵，当然cbow是把上下文的input feature vector相加
+//syn1 实际上是文章中的Wx的W矩阵,x即input feature vector 矩阵syn0
+//syn1neg 同syn1，用于负采样
+//expTable: logistic function的exp(x)表，实现是事先计算好，对词表中的每个词在计算P(v|Wt-1, . . . ,Wt-n+1)=p(x)=exp(x)/(1+exp(x))时
+//直接查表，即p(x)=exp(x)/(1+exp(x))=exp(Wx)/(1+exp(Wx))=exp(syn0*syn1)/(1+exp(syn0*syn1))
+// syn0     : 单词的向量输入 concatenate word vectors, 在code中是一个1维数组，但是应该按照二维数组来理解。
+//              访问时实际上可以看成  syn0[i, j]   i为第i个单词，j为第j个隐含单元。大小：  词典大小 * 隐含层大小
+// syn1     : hs(hierarchical softmax)算法中隐层节点到霍夫曼编码树非叶结点的映射权重. hidden->output 的 weights
 // syn1neg  : ns(negative sampling)中隐层节点到分类问题的映射权重
 // expTable : 预先存储f函数结果，算法执行中查表
 real *syn0, *syn1, *syn1neg, *expTable;
@@ -105,6 +113,7 @@ void InitUnigramTable() {
     train_words_pow += pow(vocab[a].cn, power);
   i = 0;
   d1 = pow(vocab[i].cn, power) / train_words_pow;   // 第一个词出现的概率
+  // [0, 0, 1, 1, 1, ...]
   for (a = 0; a < table_size; a++) {
     table[a] = i;
     if (a / (double)table_size > d1) {
@@ -147,6 +156,11 @@ void ReadWord(char *word, FILE *fin) {
 }
 
 // Returns hash value of a word
+//@brief 返回每个基本词的hash编码
+//hash规则
+//hash = hash * 257 + word[a];
+//@param word 基本词字面
+//@return 每个基本词的hash编码
 int GetWordHash(char *word) {
   unsigned long long a, hash = 0;
   for (a = 0; a < strlen(word); a++) 
@@ -283,6 +297,7 @@ void ReduceVocab() {
 // 根据词频生成霍夫曼树
 // Create binary Huffman tree using the word counts
 // Frequent words will have short uniqe binary codes
+//流程是先在所有的vacabulary中找2个最小weight的节点作为叶子节点，weight即基本词出现的次数cn,合并成一个父亲节点，从词序列中剔除这两个节点，并加入合成的父亲节点，重复上述过程，建成一颗哈弗曼树，最长路径log|V最小的二叉树
 void CreateBinaryTree() {
   // 最长的编码值, MAX_CODE_LENGTH
   long long a, b, i, min1i, min2i, pos1, pos2, point[MAX_CODE_LENGTH];
@@ -296,7 +311,7 @@ void CreateBinaryTree() {
   pos2 = vocab_size;
   // Following algorithm constructs the Huffman tree by adding one node at a time
   for (a = 0; a < vocab_size - 1; a++) {
-    // 每次寻找两个最小的点做合并，最小的点为0，词小的点为1
+    // 每次寻找两个最小的点做合并，最小的点为0，次小的点为1
     // First, find two smallest nodes 'min1, min2'
     if (pos1 >= 0) {
       if (count[pos1] < count[pos2]) {
@@ -456,16 +471,19 @@ void InitNet() {
   // 调用posix_memalign( )成功时会返回size字节的动态内存，并且这块内存的地址是alignment的倍数。参数alignment必须是2的幂，还是void指针的大小的倍数。返回的内存块的地址放在了memptr里面，函数返回值是0
   // 调用失败时，没有内存会被分配，memptr的值没有被定义，返回如下错误码之一. EINVAL ENOMEM
   // posix_memalign() 成功时会返回size字节的动态内存，并且这块内存的地址是alignment(这里是128)的倍数
-  // syn0 存储的是word vectors
+  // syn0 存储的是word vectors, layer1_size 隐藏层节点数目, real -> float, precision
   a = posix_memalign((void **)&syn0, 128, (long long)vocab_size * layer1_size * sizeof(real));
   if (syn0 == NULL) {printf("Memory allocation failed\n"); exit(1);}
+  // // hs       : 采用hs还是ns的标志位，默认采用hs
   if (hs) {
     // hs中，用syn1
     a = posix_memalign((void **)&syn1, 128, (long long)vocab_size * layer1_size * sizeof(real));
     if (syn1 == NULL) {printf("Memory allocation failed\n"); exit(1);}
-    for (a = 0; a < vocab_size; a++) for (b = 0; b < layer1_size; b++)
-     syn1[a * layer1_size + b] = 0;
+    for (a = 0; a < vocab_size; a++) 
+      for (b = 0; b < layer1_size; b++)
+        syn1[a * layer1_size + b] = 0;
   }
+
   if (negative>0) {
     a = posix_memalign((void **)&syn1neg, 128, (long long)vocab_size * layer1_size * sizeof(real));
     if (syn1neg == NULL) {printf("Memory allocation failed\n"); exit(1);}
@@ -473,10 +491,13 @@ void InitNet() {
       for (b = 0; b < layer1_size; b++)
         syn1neg[a * layer1_size + b] = 0;
   }
-  for (a = 0; a < vocab_size; a++) for (b = 0; b < layer1_size; b++) {
-    next_random = next_random * (unsigned long long)25214903917 + 11;
-    // 随机初始化word vectors
-    syn0[a * layer1_size + b] = (((next_random & 0xFFFF) / (real)65536) - 0.5) / layer1_size;
+
+  for (a = 0; a < vocab_size; a++) { 
+    for (b = 0; b < layer1_size; b++) {
+      next_random = next_random * (unsigned long long)25214903917 + 11;
+      // 随机初始化word vectors
+      syn0[a * layer1_size + b] = (((next_random & 0xFFFF) / (real)65536) - 0.5) / layer1_size;
+    }
   }
 
   // 创建霍夫曼树
@@ -509,15 +530,15 @@ void *TrainModelThread(void *id) {
   // now               : 当前时间，和start比较计算算法效率
   clock_t now;
 
-  // neu1              : 隐层节点
+  // neu1              : 隐层节点. 隐含层神经的值. 大小： 隐含层大小
   real *neu1 = (real *)calloc(layer1_size, sizeof(real));
-  // neu2              : 误差累计项，其实对应的是Gneu1
+  // neu2              : 误差累计项，其实对应的是Gneu1. 隐含层误差量. 大小： 隐含层大小
   real *neu1e = (real *)calloc(layer1_size, sizeof(real));
 
   FILE *fi = fopen(train_file, "rb");
   // 将文件内容分配给各个线程
   fseek(fi, file_size / (long long)num_threads * (long long)id, SEEK_SET);
-  while (1) {
+  while (1) {           // 打印训练的进度情况
     if (word_count - last_word_count > 10000) {
       word_count_actual += word_count - last_word_count;
       last_word_count = word_count;
@@ -537,7 +558,7 @@ void *TrainModelThread(void *id) {
     }
 
     if (sentence_length == 0) {                   // 如果当前句子长度为0
-      while (1) {
+      while (1) {       // 从输入文件中读入1000个单词组成一个句子，存入sen， sen[i] = word_index, 也就是sen数组里的顺序与单词在原文中的顺序一致，而sen存放的值为词典中该单词的位置。
         word = ReadWordIndex(fi);
         // 读到文件末尾
         if (feof(fi)) 
@@ -554,23 +575,24 @@ void *TrainModelThread(void *id) {
         // The subsampling randomly discards frequent words while keeping the ranking same
         if (sample > 0) {
           // 低频词被丢弃概率低，高频词被丢弃概率高
+          // sample : 亚采样概率的参数，亚采样的目的是以一定概率拒绝高频词，使得低频词有更多出镜率，默认为0，即不进行亚采样
           real ran = (sqrt(vocab[word].cn / (sample * train_words)) + 1) * (sample * train_words) / vocab[word].cn;
           next_random = next_random * (unsigned long long)25214903917 + 11;
           if (ran < (next_random & 0xFFFF) / (real)65536) 
             continue;
         }
-        sen[sentence_length] = word;
+        sen[sentence_length] = word;              // sentence_length  - 该sen数组的长度
         sentence_length++;
         if (sentence_length >= MAX_SENTENCE_LENGTH) break;
       }
 
-      // 当前单词在当前句中的index，起始值为0
+      // 当前单词在当前句中的index，起始值为0. sentence_position - 为最外层while循环遍历该句子时，对记录当前单词在此句子中的位置。
       sentence_position = 0;
     }
 
     // feof(fi)   : 照应while中的break，如果读到末尾，退出
     // word_count : 已经做到了一个thread应尽的工作量，就退出
-    if (feof(fi) || (word_count > train_words / num_threads)) {
+    if (feof(fi) || (word_count > train_words / num_threads)) {   //如果 处理的单词个数超出了分配给当前线程的个数，则结束。
       word_count_actual += word_count - last_word_count;
       local_iter--;
       if (local_iter == 0) break;
@@ -600,32 +622,40 @@ void *TrainModelThread(void *id) {
     // cbow 框架
     if (cbow) {  //train the cbow architecture
       // 将窗口内的word vectors累加到隐层节点上
-      // in -> hidden
+      // in -> hidden.   （正向传播,  得到隐含层）
       cw = 0;
-      for (a = b; a < window * 2 + 1 - b; a++) { 
+      for (a = b; a < window * 2 + 1 - b; a++) {         // //扫描目标单词的左右几个单词. 遍历左右窗口词，c从 sentence_position - (window -b)   到  sentence_position + (window -b)   ， 且 c != sentence_position  
         if (a != window) {
           c = sentence_position - window + a;
           if (c < 0) 
             continue;
           if (c >= sentence_length) 
             continue;
-          last_word = sen[c];
+          //@brief last_word等于上下文在vocabulary中的索引
+          last_word = sen[c];           // 得到c处存放的单词索引
           // 这个单词没有
           if (last_word == -1) 
             continue;
+          // syn0     : 单词的向量输入 concatenate word vectors
+          //@brief 此处注意last_word,即上下文的input feature vector在input feature vector矩阵syn0中的索引
+          //@param 计算该nn的输入vector即x=neu1
           for (c = 0; c < layer1_size; c++) 
-            neu1[c] += syn0[c + last_word * layer1_size];
+            neu1[c] += syn0[c + last_word * layer1_size];   // 将该词对应到的每一个in->hidden的网络权重系数syn0 累加到  隐含层单元neu1中
           cw++;
         }
       }
 
       if (cw) {
-        for (c = 0; c < layer1_size; c++) neu1[c] /= cw;
-        if (hs) for (d = 0; d < vocab[word].codelen; d++) {
+        for (c = 0; c < layer1_size; c++) 
+          neu1[c] /= cw;
+
+        // HIERARCHICAL SOFTMAX   目前默认hs为1的
+        if (hs) for (d = 0; d < vocab[word].codelen; d++) { // 遍历该词的huffman编码串
           f = 0;
           // 路径上的点
-          l2 = vocab[word].point[d] * layer1_size;
-          // Propagate hidden -> output
+          //@brief 此处注意l2即为每个父节点的索引，对应到模型中即Wx,中的W[parent]向量
+          l2 = vocab[word].point[d] * layer1_size;          // 计算出该词在hidden-output 网络中的权重存储位置 l2 = vocab_[word_index].point[d] * layer1_size
+          // Propagate hidden -> output. （正向传播，得到该编码单元对应的output 值f）
           // 准备计算f
           for (c = 0; c < layer1_size; c++) 
             f += neu1[c] * syn1[c + l2];
@@ -636,15 +666,23 @@ void *TrainModelThread(void *id) {
           else if (f >= MAX_EXP) 
             continue;
           else 
-            // // 从expTable中查找，快速计算
+            // // 从expTable中查找，快速计算. 对 f 进行Sigmoid变换  （这里是预先存放在了expTable表中）
             f = expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
-          // 'g' is the gradient multiplied by the learning rate
+          // 'g' is the gradient multiplied by the learning rate. 计算下降的梯度g     （乘了学习率alpha）
+              //@brief此处最核心，loss是交叉熵
+              //Loss=xlogp(x)+（1-x）*log(1-p（x）) =
+              //其中p(x)=exp(neu1[c] * syn1[c + l2])/(1+exp(neu1[c] * syn1[c + l2]))
+              //x=1-code#作者才此处定义label为1-code,实际上也可以是code
+              //log(L) = (1-x) * neu1[c] * syn1[c + l2] -x*log(1 + exp(neu1[c] * syn1[c + l2]))
+              //对log(L)中的syn1进行偏导，g=(1 -code - p(x))*syn1
+              //因此会有
+              //g = (1 - vocab[word].code[d] - f) * alpha;alpha学习速率
           g = (1 - vocab[word].code[d] - f) * alpha;
-          // Propagate errors output -> hidden
+          // Propagate errors output -> hidden. （反向传播 得到隐含层误差）
           // 记录累积误差项
           for (c = 0; c < layer1_size; c++) 
             neu1e[c] += g * syn1[c + l2];
-          // Learn weights hidden -> output
+          // Learn weights hidden -> output. 
           // 更新隐层到霍夫曼树非叶节点的权重
           for (c = 0; c < layer1_size; c++) 
             syn1[c + l2] += g * neu1[c];
@@ -679,19 +717,19 @@ void *TrainModelThread(void *id) {
             syn1neg[c + l2] += g * neu1[c];
         }
 
-        // hidden -> in
+        // hidden -> in. （反向传递， 更新in-hidden网络权重）
         // 根据隐层节点累积误差项，更新word vectors
-        for (a = b; a < window * 2 + 1 - b; a++) {
+        for (a = b; a < window * 2 + 1 - b; a++) {    // 遍历左右窗口词，c从 sentence_position - (window -b)   到  sentence_position + (window -b)   ， 且 c != sentence_position
           if (a != window) {
             c = sentence_position - window + a;
             if (c < 0) 
               continue;
             if (c >= sentence_length) 
               continue;
-            last_word = sen[c];
+            last_word = sen[c];    // 得到c处存放的单词索引 
             if (last_word == -1) 
               continue;
-            for (c = 0; c < layer1_size; c++) 
+            for (c = 0; c < layer1_size; c++)         // 学习权重input-hidden   将隐含层单元误差量neu1e 加到  该词对应到的每一个in->hidden的网络权重系数syn0上 
               syn0[c + last_word * layer1_size] += neu1e[c];
           }
         }
