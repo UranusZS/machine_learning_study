@@ -1,0 +1,11 @@
+# this is a program of the prediction of the GBM_LR      
+# the gbm model is the output of the xgboost, the lr model is from the liblinear
+# perhaps the python module included in the lib is better to use, this is just
+for study the prediction process    
+# reference to:    
+#     https://github.com/komiya-atsushi/xgboost-predictor-java/tree/master/xgboost-predictor     
+...
+execute:    
+
+    
+ 
