@@ -17,5 +17,5 @@ sys.path.append(home_dir + '/../python_predict')
 import gbm.gbmodel
 import gbm.gbtree
 
-gbm.gbmodel.test('./0002.model')
+#gbm.gbmodel.test('./0002.model')
 gbm.gbtree.test('./0002.model')

@@ -8,6 +8,9 @@
     > Created Time: 2016年11月06日 星期日 00时00分28秒
 '''
 
+from tree.rtree_node import RTreeNode
+from tree.rtree_node_stat import RTreeNodeStat
+
 class RegTree(object):
 
     _model_reader     = None
@@ -20,11 +23,15 @@ class RegTree(object):
     _size_leaf_vector = 0
     _reserved_list    = []
 
+    _rtree_node_list      = []
+    _rtree_node_stat_list = []
 
-    def __init__(self):
+
+    def __init__(self, model_reader):
         '''
         __init__
         '''
+        self._model_reader = model_reader
         return 
 
     def __del__(self):
@@ -33,11 +40,13 @@ class RegTree(object):
         '''
         return 
 
-    def init_rtree_model(self, model_reader):
+    def init_rtree_model(self, model_reader=None):
         '''
         init_rtree_model
         '''
-        self._model_reader = model_reader
+        if (model_reader is not None):
+            self._model_reader = model_reader
+
         return 
 
     def load_reg_tree(self, model_reader=None):
@@ -47,12 +56,38 @@ class RegTree(object):
         if (model_reader is not None):
             self._model_reader = model_reader
 
-        self._num_roots = self._model_reader.read_int32()
-        self._num_nodes = self._model_reader.read_int32()
+        self._rtree_node_list      = []
+        self._rtree_node_stat_list = []
+
+        self._num_roots   = self._model_reader.read_int32()
+        self._num_nodes   = self._model_reader.read_int32()
         self._num_deleted = self._model_reader.read_int32()
-        self._max_depth = self._model_reader.read_int32()
+        self._max_depth   = self._model_reader.read_int32()
         self._num_feature = self._model_reader.read_int32()
         self._size_leaf_vector = self._model_reader.read_int32()
-        self._reserved_list = self._model_reader.read_int32_arr(31)
+        self._reserved_list    = self._model_reader.read_int32_arr(31)
+
+        for i in range(self._num_nodes):
+            node = RTreeNode(self._model_reader)
+            node.load_node()
+            self._rtree_node_list.append(node)
+        for i in range(self._num_nodes):
+            stat = RTreeNodeStat(self._model_reader)
+            stat.load_param()
+            self._rtree_node_stat_list.append(stat)
 
         return 0
+
+    def print_reg_tree(self):
+        '''
+        print_reg_tree
+        '''
+        #print ("the reg tree : ")
+        print ("the num_roots is %d" % self._num_roots)
+        print ("the num_nodes is %d" % self._num_nodes)
+        print ("the num_deleted is %d" % self._num_deleted)
+        print ("the max_depth is %d" % self._max_depth)
+        print ("the num_feature is %d" % self._num_feature)
+        print ("the size_leaf_vector is %d" % self._size_leaf_vector)
+        print self._reserved_list
+

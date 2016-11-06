@@ -52,5 +52,3 @@ class RTreeNodeStat(object):
 
         return 0
 
-
-

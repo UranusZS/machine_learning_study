@@ -23,16 +23,34 @@ class RTreeNode(object):
     _split_index  = 0
     _is_leaf      = 0
 
-    def __init__(self):
+    def print_node(self):
+        '''
+        print_node
+        '''
+        print self._parent
+        print self._cleft
+        print self._cright
+        print self._sindex
+        print self._leaf_value
+        print self._split_cond
+        print self._default_next
+        print self._split_index
+        print self._is_leaf
+        return 0
+
+    def __init__(self, model_reader):
         '''
         __init__
         '''
+        if (model_reader is not None):
+            self._model_reader = model_reader
         return 
 
     def __del__(self):
         '''
         __del__
         '''
+        self._model_reader = None 
         return 
 
     def init_node(self, model_reader=None):
@@ -82,13 +100,32 @@ class RTreeNode(object):
         '''
         cdefault
         '''
-        return self.default_left() ? self._cleft : self._cright
+        if (self.default_left()):
+            return self._cleft
+        else:
+            return self._cright
 
     def default_left(self):
         '''
         default_left
         '''
-        return 0 != (self._sindex >>> 31)
+        ret = 0 != (self._sindex >> 31) # >>> or >>
+        return ret
+
+    def print_node(self):
+        '''
+        print_node
+        '''
+        print self._parent
+        print self._cleft
+        print self._cright
+        print self._sindex
+        print self._leaf_value
+        print self._split_cond
+        print self._default_next
+        print self._split_index
+        print self._is_leaf
+        return 0
 
     def next(self):
         '''

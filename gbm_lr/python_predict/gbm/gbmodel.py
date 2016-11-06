@@ -74,13 +74,13 @@ class GBModel(object):
         return 0
 
     def print_model(self):
-        print self._basic_score
-        print self._num_feature
-        print self._num_class
-        print self._contain_extra_attrs
+        print ("the basic_score is %f" % self._basic_score)
+        print ("the num_feature is %d" % self._num_feature)
+        print ("the num_class is %d" % self._num_class)
+        print ("contain_extra_attrs is %d" % self._contain_extra_attrs)
         print self._reserved_list
-        print self._name_gbm
-        print self._name_obj
+        print ("the gbm name is %s" % self._name_gbm)
+        print ("the obj name is %s" % self._name_obj)
 
 
 def test(filename):
