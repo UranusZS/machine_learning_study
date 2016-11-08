@@ -7,4 +7,4 @@
     > Mail: dragon_201209@126.com
     > Created Time: 2016年11月05日 星期六 14时42分39秒
 '''
-__all__ = ['reg_tree', 'rtree_node', 'rtree_node_stat']
+__all__ = ['f_vec', 'reg_tree', 'rtree_node', 'rtree_node_stat']
