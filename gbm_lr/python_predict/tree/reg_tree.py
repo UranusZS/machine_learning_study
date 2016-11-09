@@ -21,10 +21,10 @@ class RegTree(object):
     _max_depth        = 0
     _num_feature      = 0
     _size_leaf_vector = 0
-    _reserved_list    = []
+    _reserved_list    = list() 
 
-    _rtree_node_list      = []
-    _rtree_node_stat_list = []
+    _rtree_node_list      = list() 
+    _rtree_node_stat_list = list() 
 
 
     def __init__(self, model_reader):
@@ -56,8 +56,8 @@ class RegTree(object):
         if (model_reader is not None):
             self._model_reader = model_reader
 
-        self._rtree_node_list      = []
-        self._rtree_node_stat_list = []
+        self._rtree_node_list      = list() 
+        self._rtree_node_stat_list = list() 
 
         self._num_roots   = self._model_reader.read_int32()
         self._num_nodes   = self._model_reader.read_int32()

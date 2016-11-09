@@ -18,7 +18,7 @@ class GBModel(object):
     _num_feature         = 0
     _num_class           = 0
     _contain_extra_attrs = 0
-    _reserved_list       = []
+    _reserved_list       = list() 
 
     _name_gbm = ""
     _name_obj = ""

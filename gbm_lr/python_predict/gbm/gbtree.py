@@ -56,10 +56,10 @@ class GBTree(GBModel):
         if (filename is not None):
             self.init_gbtree(filename)
 
-        self._tree_list      = []
-        self._tree_info_list = []
+        self._tree_list      = list() 
+        self._tree_info_list = list() 
 
-        self._group_trees    = [[]]
+        self._group_trees    = list(list()) 
 
         #print self._model_reader
         self._num_trees   = self._model_reader.read_int32()
