@@ -54,6 +54,8 @@ class ModelReader(object):
             return -1
         try:
             buffer = self._fp.read(size)
+            if (size != len(buffer)):
+                ret = 16 
             val,   = struct.unpack(type, buffer)
         except Exception as e:
             #print e
@@ -81,6 +83,8 @@ class ModelReader(object):
         raw = ""
         try:
             raw = self._fp.read(size)
+            if (size != len(raw)):
+                ret = 16 
         except Exception as e:
             #print e
             ret = 3
@@ -150,7 +154,7 @@ class ModelReader(object):
         read_int32_arr
         '''
         ret      = 0
-        arr_list = []
+        arr_list = list() 
         for i in range(num):
             val = self.read_int32(ret)
             if (0 != ret):
@@ -163,9 +167,22 @@ class ModelReader(object):
         read_uint32_arr
         '''
         ret      = 0
-        arr_list = []
+        arr_list = list() 
         for i in range(num):
             val = self.read_uint32(ret)
+            if (0 != ret):
+                return arr_list
+            arr_list.append(val)
+        return arr_list
+
+    def read_float_arr(self, num=30, ret=0):
+        '''
+        read_float_arr
+        '''
+        ret      = 0
+        arr_list = list() 
+        for i in range(num):
+            val = self.read_float(ret)
             if (0 != ret):
                 return arr_list
             arr_list.append(val)

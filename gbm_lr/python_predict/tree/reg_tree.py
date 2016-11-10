@@ -27,7 +27,7 @@ class RegTree(object):
     _rtree_node_stat_list = list() 
 
 
-    def __init__(self, model_reader):
+    def __init__(self, model_reader=None):
         '''
         __init__
         '''
@@ -78,16 +78,16 @@ class RegTree(object):
 
         return 0
 
-    def print_reg_tree(self):
+    def print_reg_tree(self, tabspace="    "):
         '''
         print_reg_tree
         '''
         #print ("the reg tree : ")
-        print ("the num_roots is %d" % self._num_roots)
-        print ("the num_nodes is %d" % self._num_nodes)
-        print ("the num_deleted is %d" % self._num_deleted)
-        print ("the max_depth is %d" % self._max_depth)
-        print ("the num_feature is %d" % self._num_feature)
-        print ("the size_leaf_vector is %d" % self._size_leaf_vector)
-        print self._reserved_list
+        print (tabspace + "the num_roots is %d" % self._num_roots)
+        print (tabspace + "the num_nodes is %d" % self._num_nodes)
+        print (tabspace + "the num_deleted is %d" % self._num_deleted)
+        print (tabspace + "the max_depth is %d" % self._max_depth)
+        print (tabspace + "the num_feature is %d" % self._num_feature)
+        print (tabspace + "the size_leaf_vector is %d" % self._size_leaf_vector)
+        print (tabspace + "%r" % (self._reserved_list))
 
