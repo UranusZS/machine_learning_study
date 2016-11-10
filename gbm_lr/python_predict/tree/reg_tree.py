@@ -47,7 +47,7 @@ class RegTree(object):
         if (model_reader is not None):
             self._model_reader = model_reader
 
-        return 
+        return 0 
 
     def load_reg_tree(self, model_reader=None):
         '''
@@ -89,5 +89,15 @@ class RegTree(object):
         print (tabspace + "the max_depth is %d" % self._max_depth)
         print (tabspace + "the num_feature is %d" % self._num_feature)
         print (tabspace + "the size_leaf_vector is %d" % self._size_leaf_vector)
-        print (tabspace + "%r" % (self._reserved_list))
+        print (tabspace + "the reserved_list is %r" % (self._reserved_list))
+
+        print (tabspace + "the %d tree nodes is :" % (self._num_nodes))
+        for i in range(self._num_nodes): 
+            print ("the tree %d is -> " % (i))
+            self._rtree_node_list[i].print_node(tabspace + tabspace)
+
+        print (tabspace + "the %d tree stat is :" % (self._num_nodes))
+        for i in range(self._num_nodes): 
+            print ("the tree stat %d is -> " % (i))
+            self._rtree_node_stat_list[i].print_stat(tabspace + tabspace)
 

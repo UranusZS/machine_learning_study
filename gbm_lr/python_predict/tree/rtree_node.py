@@ -74,11 +74,11 @@ class RTreeNode(object):
         self._sindex = self._model_reader.read_int32()
 
         if (self.is_leaf()):
-            self._left_value = self._model_reader.read_int32()
+            self._leaf_value = self._model_reader.read_float()
             self._split_cond = float("inf") # sys.float_info.max 
         else:
-            self._split_cond = self._model_reader.read_int32()
-            self._left_value = float("inf") # sys.float_info.max 
+            self._split_cond = self._model_reader.read_float()
+            self._leaf_value = float("inf") # sys.float_info.max 
 
         self._default_next = self.cdefault()
         self._split_index  = self.split_index()
@@ -112,19 +112,19 @@ class RTreeNode(object):
         ret = 0 != (self._sindex >> 31) # >>> or >>
         return ret
 
-    def print_node(self):
+    def print_node(self, tabspace="    "):
         '''
         print_node
         '''
-        print self._parent
-        print self._cleft
-        print self._cright
-        print self._sindex
-        print self._leaf_value
-        print self._split_cond
-        print self._default_next
-        print self._split_index
-        print self._is_leaf
+        print (tabspace + "parent is %d " % (self._parent))
+        print (tabspace + "cleft is %d " % (self._cleft))
+        print (tabspace + "cright is %d " % (self._cright))
+        print (tabspace + "sindex is %d " % (self._sindex))
+        print (tabspace + "leaf_value is %f " % (self._leaf_value)) 
+        print (tabspace + "split_cond is %f " % (self._split_cond))
+        print (tabspace + "default_next is %d " % (self._default_next))
+        print (tabspace + "split_index is %d " % (self._split_index))
+        print (tabspace + "is_leaf is %d " % (self._is_leaf))
         return 0
 
     def next(self):

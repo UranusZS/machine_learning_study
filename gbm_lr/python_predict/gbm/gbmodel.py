@@ -78,7 +78,7 @@ class GBModel(object):
         print ("the num_feature is %d" % self._num_feature)
         print ("the num_class is %d" % self._num_class)
         print ("contain_extra_attrs is %d" % self._contain_extra_attrs)
-        print self._reserved_list
+        print ("the reserved_list is %r" % (self._reserved_list))
         print ("the gbm name is %s" % self._name_gbm)
         print ("the obj name is %s" % self._name_obj)
 

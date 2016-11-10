@@ -45,10 +45,19 @@ class RTreeNodeStat(object):
         '''
         if (model_reader is not None):
             self._model_reader = model_reader
-        self._loss_chg = self._model_reader.read_int32()
-        self._sum_hess = self._model_reader.read_int32()
-        self._base_weight = self._model_reader.read_int32()
+        self._loss_chg = self._model_reader.read_float()
+        self._sum_hess = self._model_reader.read_float()
+        self._base_weight = self._model_reader.read_float()
         self._leaf_child_cnt = self._model_reader.read_int32()
 
         return 0
+
+    def print_stat(self, tabspace="    "):
+        '''
+        print_stat
+        '''
+        print (tabspace + "the loss_chg is %f " % (self._loss_chg))
+        print (tabspace + "the sum_hess is %f " % (self._sum_hess))
+        print (tabspace + "the base_weight is %f " % (self._base_weight))
+        print (tabspace + "the leaf_child_cnt is %d " % (self._leaf_child_cnt))
 

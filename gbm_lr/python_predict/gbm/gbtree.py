@@ -74,8 +74,8 @@ class GBTree(GBModel):
         self._num_output_group = self._model_reader.read_int32()
         self._size_leaf_vector = self._model_reader.read_int32()
         self._reserved_para    = self._model_reader.read_int32_arr(31)
-        #self._model_reader.read_int32()
-        print ("the padding is %d " % (self._model_reader.read_int32()))
+        self._model_reader.read_int32()
+        #print ("the padding is %d " % (self._model_reader.read_int32()))
 
         for i in range(self._num_trees):
             tree = RegTree(self._model_reader)
@@ -121,7 +121,7 @@ class GBTree(GBModel):
         print ("the num_pbuffer_deprecated is %d" % self._num_pbuffer_deprecated)
         print ("the num_output_group is %d" % self._num_output_group)
         print ("the size_leaf_vector is %d" % self._size_leaf_vector)
-        print (self._reserved_para)
+        print ("the reserved_para is %r" % (self._reserved_para))
 
         tree_len = len(self._tree_list)
         print "### the %d trees is : " % tree_len
