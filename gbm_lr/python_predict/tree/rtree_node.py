@@ -70,6 +70,14 @@ class RTreeNode(object):
         self._split_index  = self.split_index()
         self._is_leaf      = self.is_leaf()
 
+    def get_leaf_value(self):
+        '''
+        get_leaf_value
+        '''
+        if (self.is_leaf()):
+            return self._leaf_value
+        return float("nan")
+
     def is_leaf(self):
         '''
         is_leaf
@@ -160,9 +168,15 @@ class RTreeNode(object):
         print (tabspace + "is_leaf is %d " % (self._is_leaf))
         return 0
 
-    def next(self):
+    def next(self, feature):
         '''
         next
         '''
-        return 0
+        fvalue = feature.fvalue(self._split_index)
+        # check fvalue is nan, or can check flag is -1
+        if (fvalue != fvalue):
+            return self._default_next
+        if (fvalue < self._split_cond):
+            return self._cleft
+        return self._cright
 

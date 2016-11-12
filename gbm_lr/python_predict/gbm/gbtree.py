@@ -108,11 +108,75 @@ class GBTree(GBModel):
         return 
 
     def get_pred_buffer_size(self):
+        '''
+        get_pred_buffer_size
+        '''
         size = self._num_output_group * self._num_pbuffer_deprecated \
                 * (self._size_leaf_vector + 1)
         return size
 
+    def predict(self, feature, ntree_limit=0):
+        '''
+        predict
+        '''
+        preds_list = list()
+        for i in range(self._num_output_group):
+            pred = self.pred(feature, i, 0, ntree_limit)
+            preds_list.append(pred)
+        return preds_list
+
+    def predict_single(self, feature, ntree_limit=0):
+        '''
+        predict_single
+        '''
+        if (-1 != self._num_output_group):
+            return float("inf")
+        return self.pred(feature, 0, 0, ntree_limit)
+
+    def pred_leaf(self, feature, ntree_limit):
+        '''
+        pred_leaf
+        '''
+        return self.pred_path(feature, 0, ntree_limit)
+
+    def pred(self, feature, bst_group, root_index, ntree_limit):
+        '''
+        pred
+        '''
+        if (bst_group >= len(self._group_trees)):
+            return float("inf") 
+        trees_list = self._group_trees[bst_group]
+        if (0 == ntree_limit):
+            tree_left = len(self._tree_list)
+        else:
+            tree_left = ntree_limit
+        if (tree_left > len(self._tree_list)):
+            tree_left = len(self._tree_list)
+        psum = 0.0
+        for i in range(tree_left):
+            psum += trees_list[i].get_leaf_value(feature, root_index)
+        return psum
+
+    def pred_path(self, feature, root_index, ntree_limit):
+        '''
+        pred_path
+        '''
+        if (0 == ntree_limit):
+            tree_left = len(self._tree_list)
+        else:
+            tree_left = ntree_limit
+        if (tree_left > len(self._tree_list)):
+            tree_left = len(self._tree_list)
+        leaf_index_list = list()
+        for i in range(tree_left):
+            leaf_index = self._tree_list[i].get_leaf_index(feature, root_index)
+            leaf_index_list.append(leaf_index)
+        return leaf_index_list
+        
     def print_model(self, tabspace="    "):
+        '''
+        print_model
+        '''
         GBModel.print_model(self)
         print ("the num_trees is %d" % self._num_trees)
         print ("the num_roots is %d" % self._num_roots)

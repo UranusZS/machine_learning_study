@@ -78,6 +78,30 @@ class RegTree(object):
 
         return 0
 
+    def get_leaf_value(self, feature, root_id):
+        '''
+        get_leaf_value
+        '''
+        if (root_id >= len(self._rtree_node_list)):
+            return float("nan")
+        n = self._rtree_node_list[root_id]
+        while (n.is_leaf() is not True):
+            n = self._rtree_node_list[n.next(feature)]
+        return n.get_leaf_value()
+
+    def get_leaf_index(self, feature, root_id):
+        '''
+        get_leaf_index
+        '''
+        if (root_id >= len(self._rtree_node_list)):
+            return -1 
+        pid = root_id
+        n = self._rtree_node_list[root_id]
+        while (n.is_leaf() is not True):
+            pid = n.next(feature)
+            n = self._rtree_node_list[pid]
+        return pid  
+
     def print_reg_tree(self, tabspace="    "):
         '''
         print_reg_tree
