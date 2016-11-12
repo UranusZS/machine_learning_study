@@ -15,6 +15,7 @@ class RTreeNode(object):
     _parent     = 0
     _cleft      = 0
     _cright     = 0
+    #unsigned sindex
     _sindex     = 0
     _leaf_value = 0.0
     _split_cond = 0.0
@@ -22,21 +23,6 @@ class RTreeNode(object):
     _default_next = 0
     _split_index  = 0
     _is_leaf      = 0
-
-    def print_node(self):
-        '''
-        print_node
-        '''
-        print self._parent
-        print self._cleft
-        print self._cright
-        print self._sindex
-        print self._leaf_value
-        print self._split_cond
-        print self._default_next
-        print self._split_index
-        print self._is_leaf
-        return 0
 
     def __init__(self, model_reader):
         '''
@@ -90,11 +76,58 @@ class RTreeNode(object):
         '''
         return -1 == self._cleft
 
+    def is_root(self):
+        '''
+        is_root
+        '''
+        return -1 == self._parent
+
+    def is_left_child(self):
+        '''
+        is_left_child
+        '''
+        ret = self._parent & (1 << 31)
+        return 0 != ret
+
+    def get_parent(self):
+        '''
+        get_parent
+        '''
+        if (self.is_root()):
+            return -1
+        ret = self._parent & ((1 << 31) -1)
+        return ret
+
     def split_index(self):
         '''
         split_index
         '''
         return (int)(self._sindex & ((1l << 31) - 1l))
+
+    def set_split(self, split_index, split_cond, default_left=False):
+        '''
+        set_split
+        '''
+        if (default_left):
+            split_index |= (1 << 31)
+        self._sindex     = split_index
+        self._split_cond = split_cond
+
+    def set_leaf(self, value, right=-1):
+        '''
+        set_leaf
+        '''
+        self._leaf_value = value
+        self._cleft      = -1
+        self._cright     = right
+
+    def set_parent(self, pidx, is_left_child=True):
+        '''
+        set_parent
+        '''
+        if (is_left_child):
+            pidx |= (1 << 31)
+        self._parent = pidx
 
     def cdefault(self):
         '''
@@ -116,14 +149,14 @@ class RTreeNode(object):
         '''
         print_node
         '''
-        print (tabspace + "parent is %d " % (self._parent))
+        print (tabspace + "parent is %d " % (self.get_parent()))
         print (tabspace + "cleft is %d " % (self._cleft))
         print (tabspace + "cright is %d " % (self._cright))
-        print (tabspace + "sindex is %d " % (self._sindex))
+        print (tabspace + "sindex is %d " % (self.split_index()))
         print (tabspace + "leaf_value is %f " % (self._leaf_value)) 
         print (tabspace + "split_cond is %f " % (self._split_cond))
         print (tabspace + "default_next is %d " % (self._default_next))
-        print (tabspace + "split_index is %d " % (self._split_index))
+        print (tabspace + "split_index is %d " % (self.split_index()))
         print (tabspace + "is_leaf is %d " % (self._is_leaf))
         return 0
 
