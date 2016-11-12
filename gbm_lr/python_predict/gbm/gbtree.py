@@ -49,6 +49,12 @@ class GBTree(GBModel):
         GBModel.load_gbmodel(self, filename)
         return 0
 
+    def load_model(self, filename=None, with_pbuffer=None):
+        '''
+        load_model
+        '''
+        return self.load_gbtree_model(filename, with_pbuffer)
+
     def load_gbtree_model(self, filename=None, with_pbuffer=None):
         '''
         load_gbtree_model
@@ -105,7 +111,7 @@ class GBTree(GBModel):
                 if (i == self._tree_info_list[j]):
                     self._group_trees[i][tree_index] = self._tree_list[j] 
 
-        return 
+        return 0 
 
     def get_pred_buffer_size(self):
         '''
