@@ -66,7 +66,7 @@ class FVec(object):
         fvalue
         '''
         if (index >= len(self._entry_list)):
-            return 0.0
+            return float("nan") 
         return self._entry_list[index]._fvalue
 
     def is_missing(self, index=0):
@@ -111,7 +111,6 @@ class FVec(object):
             set_fvalue
             '''
             self._fvalue = fvalue
-            self._flag   = 0
 
         def set_flag(self, flag=-1):
             '''
@@ -125,7 +124,7 @@ class FVec(object):
             '''
             #print ("    fvalue is  %f" % self._fvalue)
             #print ("    flag is    %f" % self._flag)
-            print(tab_space + "    fvalue is %f, flag is %f" % (self._fvalue, self._flag))
+            print(tab_space + "    fvalue is %f, flag is %d" % (self._fvalue, self._flag))
             return 0
 
 
@@ -135,7 +134,10 @@ def test():
     '''
     fvec = FVec()
     e = FVec.Entry()
-    e.set_fvalue(5)
+    e.set_flag(-1)
+    e.print_entry()
+    e.set_fvalue(5.0)
+    e.print_entry()
     fvec.fill([ e for i in range(3) ])
     fvec.print_fvec()
 
