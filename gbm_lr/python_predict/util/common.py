@@ -30,11 +30,20 @@ class Common(object):
         ret = 1.0 / (1.0 + math.exp(-x))
         return ret
 
+    def sigmoid_list(self, x=list()):
+        '''
+        sigmoid_list
+        '''
+        ret = list()
+        for i in range(len(x)):
+            ret.append(self.sigmoid(x[i]))
+        return ret
+
     def softmax(self, in_list=list()):
         '''
         softmax
         '''
-        wmax = in_list
+        wmax = in_list[0]
         rec = in_list
         for i in range(1, len(rec)):
             if (wmax < in_list[i]):

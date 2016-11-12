@@ -10,10 +10,9 @@
 
 import math
 from util.model_reader import ModelReader
+from gbm.gbmodel import GBModel
 
-class GBLinear(object):
-
-    _model_reader = None
+class GBLinear(GBModel):
 
     _num_feature      = 0
     _num_output_group = 0
@@ -37,10 +36,9 @@ class GBLinear(object):
     def init_gblinear(self, filename):
         '''
         init_gblinear
-        '''
-        model_reader = ModelReader(filename)
-        if (model_reader):
-            self._model_reader = model_reader
+        ''' 
+        GBModel.__init__(self, filename)
+        GBModel.load_gbmodel(self, filename)
         return 0
 
     def load_model(self, filename=None, ignored_with_pbuffer=None):
