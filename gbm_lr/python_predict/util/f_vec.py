@@ -31,9 +31,7 @@ class FVec(object):
         '''
         init
         '''
-        e = self.Entry()
-        e._flag = -1
-        self._entry_list = [ e for i in range(size) ]
+        self._entry_list = [ self.Entry() for i in range(size) ]
         return 0
 
     def fill(self, inst_list=None):
@@ -106,6 +104,7 @@ class FVec(object):
             '''
             __init__
             '''
+            self._flag = -1
             return
 
         def __del__(self):
