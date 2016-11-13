@@ -113,6 +113,12 @@ class GBTree(GBModel):
 
         return 0 
 
+    def get_basic_score(self):
+        '''
+        get_basic_score
+        '''
+        return self._basic_score
+
     def get_pred_buffer_size(self):
         '''
         get_pred_buffer_size
@@ -221,5 +227,5 @@ def test(filename):
 
 
 if __name__ == "__main__":
-    print "This is gbmodel"
+    print "This is gbtree"
 
