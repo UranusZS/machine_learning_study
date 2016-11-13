@@ -100,16 +100,17 @@ class GBTree(GBModel):
         for i in range(self._num_output_group):
             tree_count = 0
             for j in range(len(self._tree_info_list)):
-                if (i == self._tree_info_list[i]):
+                if (i == self._tree_info_list[j]):
                     tree_count += 1
 
-            tree = [ RegTree() for i in range(tree_count) ]
+            tree = [ RegTree() for t in range(tree_count) ]
             self._group_trees.append(tree)
 
             tree_index = 0
             for j in range(len(self._tree_info_list)):
                 if (i == self._tree_info_list[j]):
                     self._group_trees[i][tree_index] = self._tree_list[j] 
+                    tree_index += 1
 
         return 0 
 
@@ -157,13 +158,16 @@ class GBTree(GBModel):
         '''
         if (bst_group >= len(self._group_trees)):
             return float("inf") 
+
         trees_list = self._group_trees[bst_group]
+        trees_list_len = len(trees_list)
         if (0 == ntree_limit):
-            tree_left = len(self._tree_list)
+            tree_left = trees_list_len 
         else:
             tree_left = ntree_limit
-        if (tree_left > len(self._tree_list)):
-            tree_left = len(self._tree_list)
+        if (tree_left > trees_list_len):
+            tree_left = trees_list_len 
+
         psum = 0.0
         for i in range(tree_left):
             psum += trees_list[i].get_leaf_value(feature, root_index)

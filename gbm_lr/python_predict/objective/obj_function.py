@@ -8,9 +8,9 @@
     > Created Time: 2016年11月12日 星期六 21时46分28秒
 '''
 
-from objective import RegLossObjLogistic 
-from objective import SoftmaxMulticlassObjClassify 
-from objective import SoftmaxMulticlassObjProb 
+from objective.softmax_multiclass_obj_prob import SoftmaxMulticlassObjProb 
+from objective.reg_loss_obj_logistic import RegLossObjLogistic 
+from objective.softmax_multiclass_obj_classify import SoftmaxMulticlassObjClassify 
 
 class ObjFunction(object):
 

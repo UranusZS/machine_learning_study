@@ -8,7 +8,7 @@
     > Created Time: 2016年11月12日 星期六 21时46分48秒
 '''
 
-import types
+#import types
 from util.common import Common
 
 class RegLossObjLogistic(Common):
@@ -23,7 +23,8 @@ class RegLossObjLogistic(Common):
         '''
         pred_transform
         '''
-        if (types.ListType == type(pred)):
+        if (isinstance(pred, list)):
+        #if (types.ListType == type(pred)):
             return Common.sigmoid_list(pred)
         return Common.sigmoid(pred)
 

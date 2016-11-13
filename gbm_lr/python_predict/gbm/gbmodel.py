@@ -68,8 +68,8 @@ class GBModel(object):
         self._contain_extra_attrs = self._model_reader.read_int32()
         self._reserved_list       = self._model_reader.read_int32_arr(30)
 
-        self._name_gbm = self._model_reader.read_str()
         self._name_obj = self._model_reader.read_str()
+        self._name_gbm = self._model_reader.read_str()
         
         return 0
 

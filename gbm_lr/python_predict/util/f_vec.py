@@ -60,6 +60,14 @@ class FVec(object):
             self._entry_list[i]._flag = -1
         return 0
 
+    def set_by_index(self, index, value):
+        '''
+        set_by_index
+        '''
+        if (index >= len(self._entry_list)):
+            return False 
+        self._entry_list[index].set_fvalue(value)
+        return True
 
     def fvalue(self, index=0):
         '''
@@ -110,13 +118,13 @@ class FVec(object):
             '''
             set_fvalue
             '''
-            self._fvalue = fvalue
+            self._fvalue = float(fvalue)
 
         def set_flag(self, flag=-1):
             '''
             set_flag
             '''
-            self._flag = flag
+            self._flag = int(flag)
 
         def print_entry(self, tab_space=""):
             '''

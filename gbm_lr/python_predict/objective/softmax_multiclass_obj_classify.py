@@ -8,7 +8,7 @@
     > Created Time: 2016年11月12日 星期六 21时59分23秒
 '''
 
-import types
+#import types
 from util.common import Common
 
 class SoftmaxMulticlassObjClassify(Common):
@@ -24,7 +24,8 @@ class SoftmaxMulticlassObjClassify(Common):
         pred_transform
         '''
         max_index = 0
-        if (types.ListType == type(pred)):
+        if (isinstance(pred, list)):
+        #if (types.ListType == type(pred)):
             max_value = pred[0]
             for i in range(1, len(pred)):
                 if (max_value < pred[i]):

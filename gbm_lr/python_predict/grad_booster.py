@@ -8,15 +8,15 @@
     > Created Time: 2016年11月12日 星期六 21时18分33秒
 '''
 
-from objective import ObjFunction
 from gbm.gbtree import GBTree
 from gbm.gbmodel import GBModel
 from gbm.gblinear import GBLinear
+from objective.obj_function import ObjFunction
 
 class GradBooster(GBModel):
 
-    gbm = None
-    gbj = None
+    _gbm = None
+    _gbj = None
 
     def __init__(self, filename):
         '''
@@ -41,9 +41,9 @@ class GradBooster(GBModel):
         self._obj = ObjFunction(self._name_obj)
 
         if ("gbtree" == self._name_gbm):
-            self._gbm = GBTree()
+            self._gbm = GBTree(filename)
         if ("gblinear" == self._name_gbm):
-            self._gbm = GBLinear()
+            self._gbm = GBLinear(filename)
         self._gbm.load_model()
 
         return 0
@@ -63,10 +63,10 @@ class GradBooster(GBModel):
         '''
         preds_list = self._gbm.predict(feature, ntree_limit) 
         for i in range(len(preds_list)):
-            preds_list[i] += self.gbm.get_basic_score()
+            preds_list[i] += self._gbm.get_basic_score()
         return preds_list
 
-    def predict_single(self, feature, output_margin=False, ntree_limit):
+    def predict_single(self, feature, output_margin=False, ntree_limit=0):
         '''
         predict_single
         '''
