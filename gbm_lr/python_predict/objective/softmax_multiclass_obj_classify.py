@@ -14,9 +14,15 @@ from util.common import Common
 class SoftmaxMulticlassObjClassify(Common):
     
     def __init__(self):
+        '''
+        __init__
+        '''
         return
 
     def __del__(self):
+        '''
+        __del__
+        '''
         return 
 
     def pred_transform(self, pred):

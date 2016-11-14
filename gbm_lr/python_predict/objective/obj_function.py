@@ -35,11 +35,15 @@ class ObjFunction(object):
         '''
         if ("binary:logistic" == name):
             self._obj_func = RegLossObjLogistic()  
+            return 0
         if ("multi:softmax" == name):
             self._obj_func = SoftmaxMulticlassObjClassify()  
+            return 0
         if ("multi:softprob" == name):
             self._obj_func = SoftmaxMulticlassObjProb() 
+            return 0
         self._obj_func = None
+        return 0
 
     def pred_transform(self, pred):
         '''

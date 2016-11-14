@@ -15,10 +15,12 @@ class FVec(object):
 
     _entry_list = list() 
 
-    def __init__(self):
+    def __init__(self, size=None):
         '''
         __init__
         '''
+        if (isinstance(size, int)):
+            self.init(size)
         return
 
     def __del__(self):
@@ -92,7 +94,7 @@ class FVec(object):
         #print self._entry_list
         print(tab_space + "[")
         for i in range(len(self._entry_list)):
-            self._entry_list[i].print_entry(tab_space)
+            self._entry_list[i].print_entry(str(i) + tab_space)
         print(tab_space + "]")
         return 0
 

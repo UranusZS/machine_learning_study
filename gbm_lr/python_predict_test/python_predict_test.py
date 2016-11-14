@@ -18,4 +18,4 @@ import gbm.gbmodel
 import gbm.gbtree
 
 #gbm.gbmodel.test('./0002.model')
-gbm.gbtree.test('./0002.model')
+gbm.gbtree.test('./0008.model')

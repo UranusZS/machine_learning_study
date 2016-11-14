@@ -13,10 +13,19 @@ from util.common import Common
 
 class RegLossObjLogistic(Common):
     
+    _common_tool = Common()
+
     def __init__(self):
+        '''
+        __init__
+        '''
+        self._common_tool = Common()
         return
 
     def __del__(self):
+        '''
+        __del__
+        '''
         return 
 
     def pred_transform(self, pred):
@@ -25,6 +34,6 @@ class RegLossObjLogistic(Common):
         '''
         if (isinstance(pred, list)):
         #if (types.ListType == type(pred)):
-            return Common.sigmoid_list(pred)
-        return Common.sigmoid(pred)
+            return self._common_tool.sigmoid_list(pred)
+        return self._common_tool.sigmoid(pred)
 
