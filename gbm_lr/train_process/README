@@ -1,0 +1,21 @@
+# first, train by the xgboost:    
+# ../../ is the xgboost dir    
+../../xgboost add.conf    
+../../xgboost ad.conf task=dump model_in=0008.model name_dump=dump.raw.txt    
+    
+# next, get the xgboost leaves, that is the input of the LR model    
+cat input.train | python get_gbooster_out.py > lr.train    
+cat input.test | python get_gbooster_out.py > lr.test    
+    
+# then, train the LR model    
+# ./ is the liblinear dir
+./train -s 0 lr.train lr_model    
+./predict lr.test lr_model test.out    
+    
+# by validation, we can get the two models of xgboost followed by the lr    
+# finally, the prediction is got by the two catenated models, the leaf_mapping
+can be got just like get_gbooster_out.py does      
+
+
+# testing:    
+    to be continued...    
