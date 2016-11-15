@@ -188,6 +188,21 @@ class GBTree(GBModel):
             leaf_index = self._tree_list[i].get_leaf_index(feature, root_index)
             leaf_index_list.append(leaf_index)
         return leaf_index_list
+
+    def get_leaf_mapping(self, separator="_"):
+        '''
+        get_leaf_mapping
+        '''
+        leaf_mapping = dict()
+        index = 1
+        for i in range(len(self._tree_list)):
+            leaf_list = self._tree_list[i].get_leafs()
+            for j in range(len(leaf_list)):
+                key = str(i) + separator + str(leaf_list[j])
+                leaf_mapping[key] = index
+                index += 1
+        return leaf_mapping
+
         
     def print_model(self, tabspace="    "):
         '''

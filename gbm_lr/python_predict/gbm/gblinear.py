@@ -123,6 +123,18 @@ class GBLinear(GBModel):
             psum += feature_value
         return psum
 
+    def predict_leaf(self):
+        '''
+        predict_leaf
+        '''
+        return False
+
+    def get_leaf_mapping(self):
+        '''
+        get_leaf_mapping
+        '''
+        return False
+
 
 if __name__ == "__main__":
     print "This is gblinear"

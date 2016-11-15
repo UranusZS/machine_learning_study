@@ -102,6 +102,17 @@ class RegTree(object):
             n = self._rtree_node_list[pid]
         return pid  
 
+    def get_leafs(self):
+        '''
+        get_leafs
+        '''
+        leaf_list = list()
+        for i in range(len(self._rtree_node_list)):
+            #print (self._rtree_node_list[i].is_leaf())
+            if (self._rtree_node_list[i].is_leaf()):
+                leaf_list.append(i)
+        return leaf_list
+
     def print_reg_tree(self, tabspace="    "):
         '''
         print_reg_tree

@@ -20,6 +20,12 @@ from util.f_vec import FVec
 
 def test(model_file='./0008.model'):
     gbooster = GradBooster(model_file)
+    leaf_mapping = gbooster.get_leaf_mapping()
+    #print leaf_mapping
+    #print len(leaf_mapping)
+    print "leaf mapping for LR input"
+    for (key, value) in sorted(leaf_mapping.items(), lambda x, y:cmp(int(x[1]), int(y[1])), reverse=False):
+        print key, "\t", value
     count = 0
     true_count = 0
 
@@ -38,14 +44,16 @@ def test(model_file='./0008.model'):
                     feature_dict[int(f_i[0])] = float(f_i[1])
             #print len(feature_dict)
             # 11391
-            fvec = FVec()
-            fvec.init(11391)
+            fvec = FVec(11391)
+            #fvec.init(11391)
             for (key, value) in feature_dict.items():
                 #print key, value
                 fvec.set_by_index(int(key), float(value))
             #fvec.print_fvec()
             res = gbooster.predict(fvec, False)
-            print res
+            print "result ", res
+            res_list = gbooster.predict_leaf(fvec)
+            print "res leaf", res_list
 
         except Exception as e:
             print e

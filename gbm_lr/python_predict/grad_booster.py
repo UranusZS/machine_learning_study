@@ -86,7 +86,15 @@ class GradBooster(GBModel):
         '''
         predict_leaf
         '''
-        return self._gbm.predict_leaf(feature, ntree_limit)
+        return self._gbm.pred_leaf(feature, ntree_limit)
+
+    def get_leaf_mapping(self):
+        '''
+        get_leaf_mapping
+        '''
+        if ("gbtree" == self._name_gbm):
+            return self._gbm.get_leaf_mapping()
+        return dict()
 
 
 if __name__ == "__main__":
