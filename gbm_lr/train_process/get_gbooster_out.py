@@ -9,7 +9,7 @@
 '''
 import sys
 import os
-import traceback
+#import traceback
 
 home_dir=os.path.split(os.path.realpath(__file__))[0]
 #print home_dir
@@ -18,12 +18,12 @@ sys.path.append(home_dir + '/../python_predict')
 from grad_booster import GradBooster
 from util.f_vec import FVec
 
-def get_lr_input(model_file='./0008.model', fp=sys.stdin):
+def get_lr_input(model_file='./0008.model', fsize=11391, file_in=sys.stdin, file_out=sys.stdout):
     gbooster = GradBooster(model_file)
     leaf_mapping = gbooster.get_leaf_mapping()
 
     separator = '\t'
-    for line in fp.readlines():
+    for line in file_in.readlines():
         try:
             line_arr = line.strip().split('\t')
             label         = 0
@@ -36,7 +36,7 @@ def get_lr_input(model_file='./0008.model', fp=sys.stdin):
                     f_i = line_arr[i].split(':')
                     feature_dict[int(f_i[0])] = float(f_i[1])
 
-            fvec = FVec(11391)
+            fvec = FVec(fsize)
             for (key, value) in feature_dict.items():
                 fvec.set_by_index(int(key), float(value))
 
@@ -51,10 +51,11 @@ def get_lr_input(model_file='./0008.model', fp=sys.stdin):
             output_line = str(label)
             for (key, value) in sorted(lr_feature.items(), lambda x, y : cmp(int(x[0]), int(y[0])), reverse=False):
                     output_line += separator + str(key) + ":" + str(value)
-            print output_line
+            output_line += "\n"
+            file_out.write(output_line)
 
         except Exception as e:
-            print e
+            #print e
             continue
 
 
