@@ -61,4 +61,4 @@ def test(model_file='./0008.model'):
 
 
 if __name__ == '__main__':
-    test()
+    test('./0010.model')
