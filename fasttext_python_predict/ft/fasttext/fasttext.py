@@ -11,6 +11,7 @@
 from ft.utils.model_reader import ModelReader
 from ft.fasttext.args import Args
 from ft.fasttext.dictionary import Dictionary
+from ft.fasttext.fasttext_model import FastTextModel
 
 class FastText(object):
 
@@ -26,6 +27,8 @@ class FastText(object):
     _output_m = 0
     _output_n = 0
     _output = list()
+
+    _model = None
 
     def __init__(self, filename=None):
         if (filename is not None):
@@ -53,6 +56,13 @@ class FastText(object):
         self._input_m, self._input_n, self._input = self._load_matrix()
         self._output_m, self._output_n, self._output = self._load_matrix()
 
+        self._model = FastTextModel(self._input, self._output, self._args, (self._input_m, self._input_n), (self._output_m, self._output_n))
+
+        if (Args.const_model_sup == self._args._model):
+            self._model.set_target_counts(Dictionary.const_entry_label)
+        else:
+            self._model.set_target_counts(Dictionary.const_entry_word)
+
     def _load_matrix(self):
         if (self._model_reader is None):
             return -1
@@ -63,6 +73,20 @@ class FastText(object):
             mat[i], ret = self._model_reader.read_float()
         return m, n, mat
 
+    def predict(self, fp, k, predictions):
+        words = list()
+        labels = list()
+        self._dict.get_line(fp, words, labels)
+        self._dict.add_ngrams(words, self._args._word_ngrams)
+        if (0 == len(words)):
+            return
+        _hidden_vec = [0.0 for i in range(self._args._dim)]
+        _output_vec = [0.0 for i in range(self._dict._nlabels)]
+        model_predictions = list()
+        self._model.predict_prob(words, k, model_predictions, _hidden_vec, _output_vec)
+        predictions = list()
+        for item in model_predictions:
+            predictions.append(item[0], self._dict.get_label(item[1]))
 
     def print_model(self):
         self._args.print_args()

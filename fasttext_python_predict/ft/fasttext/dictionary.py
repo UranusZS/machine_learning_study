@@ -150,6 +150,80 @@ class Dictionary(object):
                     ngrams.append(self._nwords + h)
         return
 
+    def _get_id(self, w):
+        h = self.find(w)
+        return self._word2int[h]
+
+    def _get_type(self, id):
+        if (0 >= id):
+            return -1
+        if (id > self._size):
+            return -1
+        return self._word[id]._type
+
+    def _read_word(self, fp):
+        word = ""
+        c = fp.read(1)
+        while("" != c):
+            if (' ' == c) or ('\n' == c) or ('\r' == c) or ('\t' == c) or ('\v' == c) or ('\f' == c) or ('\0' == c):
+                if (0 == len(word)):
+                    if ('\n' == c):
+                        word += const_eos
+                        return True
+                    c = fp.read(1)
+                    continue
+                else:
+                    if ('\n' == c):
+                        fp.seek(-1, 1)
+                        return True
+            word += c
+            c = fp.read(1)
+        fp.read(1)
+        return word
+
+    def get_line(self, fp, words, labels):
+        token = ""
+        ntokens = 0
+        token = self._read_word(fp)
+        while ("" != token):
+            wid = self._get_id(token)
+            if (0 > wid):
+                continue
+            _type = self._get_type(wid)
+            ntokens += 1
+            p = 0.1
+            if (const_entry_word == _type) and not self._discard(wid, p):
+                words.append(wid)
+            if (const_entry_label == _type):
+                labels.append(wid - self._nwords)
+            if (len(words) > const_max_line_size) and (Args.const_model_sup != self._args._model):
+                break
+            if (const_eow == token):
+                break
+        return ntokens
+
+    def _discard(self, wid, p):
+        if (Args.const_model_sup == self._args._model):
+            return False
+        return p > self._pdiscard[wid]
+
+    def get_counts(self, _type):
+        counts_vec = list()
+        for item in self._words:
+            if (item._type == _type):
+                counts_vec.append(item._count)
+        return counts_vec
+
+    def add_ngrams(self, line_vec, n):
+        l_line = len(line_vec)
+        for i in range(l_line):
+            h = line_vec[i]
+            for j in range(i+1, l_line):
+                if (j >= i+n):
+                    break
+                h = h * 116049371 + line[j]
+                line.append(self._nwords + (h % self._args._bucket))
+
     def print_dict(self):
         print ("the size is %d" % self._size)
         print ("the nwords is %d" % self._nwords)
