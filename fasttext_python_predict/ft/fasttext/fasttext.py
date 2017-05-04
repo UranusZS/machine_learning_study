@@ -12,6 +12,7 @@ from ft.utils.model_reader import ModelReader
 from ft.fasttext.args import Args
 from ft.fasttext.dictionary import Dictionary
 from ft.fasttext.fasttext_model import FastTextModel
+import ft.fasttext
 
 class FastText(object):
 
@@ -31,14 +32,23 @@ class FastText(object):
     _model = None
 
     def __init__(self, filename=None):
+        """
+        __init__
+        """
         if (filename is not None):
             self._model_reader = ModelReader(filename)
         return
 
     def __del__(self):
+        """
+        __del__
+        """
         return
 
     def load_model(self, filename=None):
+        """
+        load_model
+        """
         if (filename is not None):
             self._model_reader = ModelReader(filename)
         if (self._model_reader is None):
@@ -47,6 +57,9 @@ class FastText(object):
         return 0
 
     def _load_model(self, model_reader=None):
+        """
+        _load_model
+        """
         if (model_reader is not None):
             self._model_reader = model_reader
         self._args = Args(self._model_reader)
@@ -58,12 +71,15 @@ class FastText(object):
 
         self._model = FastTextModel(self._input, self._output, self._args, (self._input_m, self._input_n), (self._output_m, self._output_n))
 
-        if (Args.const_model_sup == self._args._model):
-            self._model.set_target_counts(Dictionary.const_entry_label)
+        if (ft.fasttext.args.const_model_sup == self._args._model):
+            self._model.set_target_counts(self._dict.get_counts(ft.fasttext.dictionary.const_entry_label))
         else:
-            self._model.set_target_counts(Dictionary.const_entry_word)
+            self._model.set_target_counts(self._dict.get_counts(ft.fasttext.dictionary.const_entry_word))
 
     def _load_matrix(self):
+        """
+        _load_matrix
+        """
         if (self._model_reader is None):
             return -1
         m, ret = self._model_reader.read_int64()
@@ -74,6 +90,9 @@ class FastText(object):
         return m, n, mat
 
     def predict(self, fp, k, predictions):
+        """
+        predict
+        """
         words = list()
         labels = list()
         self._dict.get_line(fp, words, labels)
@@ -89,12 +108,18 @@ class FastText(object):
             predictions.append(item[0], self._dict.get_label(item[1]))
 
     def print_model(self):
+        """
+        print_model
+        """
         self._args.print_args()
         self._dict.print_dict()
         self._print_input()
         self._print_output()
 
     def _print_input(self, tab="    "):
+        """
+        _print_input
+        """
         print ("the input matrix m is %d" % self._input_m)
         print ("the input matrix n is %d" % self._input_n)
         for i in range(self._input_m):
@@ -102,6 +127,9 @@ class FastText(object):
                 print (tab + "(%d, %d) is %f" % (i, j, self._input[i*j]))
 
     def _print_output(self, tab="    "):
+        """
+        _print_output
+        """
         print ("the output matrix m is %d" % self._output_m)
         print ("the output matrix n is %d" % self._output_n)
         for i in range(self._output_m):
@@ -109,5 +137,7 @@ class FastText(object):
                 print (tab + "(%d, %d) is %f" % (i, j, self._output[i*j]))
 
 
+if __name__ == "__main__":
+    print "This is fasttext"
 
 

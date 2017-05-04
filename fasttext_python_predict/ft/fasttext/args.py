@@ -39,19 +39,31 @@ class Args(object):
     _model_reader = None 
 
     def __init__(self, model_reader=None):
+        """
+        __init__
+        """
         if (model_reader):
             self._model_reader = model_reader
         return
 
     def __del__(self):
+        """
+        __del__
+        """
         return
 
     def init_args(self, model_reader=None):
+        """
+        init_args
+        """
         if (model_reader):
             self._model_reader = model_reader
         return
 
     def load(self, model_reader=None):
+        """
+        load
+        """
         if (model_reader is not None):
             self._model_reader = model_reader
         self._dim, ret            = self._model_reader.read_int32()
@@ -71,6 +83,9 @@ class Args(object):
         return 0
 
     def print_args(self):
+        """
+        print_args
+        """
         print ("the dim is %d" % self._dim) 
         print ("the ws is %d" % self._ws) 
         print ("the epoch %d" % self._epoch) 
@@ -84,3 +99,7 @@ class Args(object):
         print ("the maxn is %d" % self._maxn) 
         print ("the lr_update_rate is %d" % self._lr_update_rate) 
         print ("the t is %d" % self._t) 
+
+
+if __name__ == "__main__":
+    print "This is args"

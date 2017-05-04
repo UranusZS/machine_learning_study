@@ -11,6 +11,7 @@
 import math
 from ft.utils.model_reader import ModelReader
 from ft.fasttext.args import Args
+import ft.fasttext
 
 const_eos = "</s>"
 const_bow = "<"
@@ -30,12 +31,21 @@ class Entry(object):
     subwords = list()
 
     def __init__(self):
+        """
+        __init__
+        """
         return
 
     def __del__(self):
+        """
+        __del__
+        """
         return
 
     def print_entry(self):
+        """
+        print_entry
+        """
         print ("word is %s, type is %d, count is %d" % (self._word, self._type, self._count))
         return
 
@@ -55,15 +65,24 @@ class Dictionary(object):
     _ntokens = 0
 
     def __init__(self, args, model_reader=None):
+        """
+        __init__
+        """
         self._args = args
         if (model_reader is not None):
             self._model_reader = model_reader
         return
 
     def __del__(self):
+        """
+        __del__
+        """
         return
 
     def hash(self, _str):
+        """
+        hash
+        """
         h = 2166136261
         for i in _str:
             h = h ^ int(_str(i))
@@ -71,12 +90,18 @@ class Dictionary(object):
         return h
 
     def find(self, _str):
+        """
+        find
+        """
         h = hash(_str) % const_max_vocab_size
         while (self._word2int[h] != -1) and (self._words[self._word2int[h]]._word != _str):
             h = (h + 1) % const_max_vocab_size
         return h
 
     def load(self, args=None, model_reader=None):
+        """
+        load
+        """
         if (args is not None):
             self._args = args
         if (model_reader is not None):
@@ -88,7 +113,7 @@ class Dictionary(object):
         self._ntokens, ret = self._model_reader.read_int64()
         for i in range(self._size):
             e = Entry()
-            print "        -----"
+            #print "        -----"
             val, ret = self._model_reader.read_char()
             while (val is not '\0'):
                 #print "val type ", type(val), " val " , ord(val), val
@@ -108,7 +133,7 @@ class Dictionary(object):
             e._type = ord(val)
             #print e._count
             #print e._type
-            e.print_entry()
+            #e.print_entry()
             self._words.append(e)
             self._word2int[self.find(e._word)] = i
         self._init_table_discard()
@@ -116,6 +141,9 @@ class Dictionary(object):
         return 
 
     def _init_table_discard(self):
+        """
+        _init_table_discard 
+        """
         self._pdiscard = [0 for i in range(self._size)]
         for i in range(self._size):
             f = float(self._words[i]._count) / float(self._ntokens)
@@ -124,6 +152,9 @@ class Dictionary(object):
         return
 
     def _init_ngrams(self):
+        """
+        _init_ngrams
+        """
         for i in range(self._size):
             self._words[i]._subwords = list()
             word = const_bow + self._words[i]._word + const_eow
@@ -132,6 +163,9 @@ class Dictionary(object):
         return
 
     def _compute_ngrams(self, word, ngrams):
+        """
+        _compute_ngrams
+        """
         for i in range(len(word)):
             _ngram = ""
             if (0x80 == (ord(word[i]) & 0xC0)):
@@ -151,10 +185,16 @@ class Dictionary(object):
         return
 
     def _get_id(self, w):
+        """
+        _get_id
+        """
         h = self.find(w)
         return self._word2int[h]
 
     def _get_type(self, id):
+        """
+        _get_type
+        """
         if (0 >= id):
             return -1
         if (id > self._size):
@@ -162,6 +202,9 @@ class Dictionary(object):
         return self._word[id]._type
 
     def _read_word(self, fp):
+        """
+        _read_word
+        """
         word = ""
         c = fp.read(1)
         while("" != c):
@@ -182,6 +225,9 @@ class Dictionary(object):
         return word
 
     def get_line(self, fp, words, labels):
+        """
+        get_line
+        """
         token = ""
         ntokens = 0
         token = self._read_word(fp)
@@ -196,18 +242,25 @@ class Dictionary(object):
                 words.append(wid)
             if (const_entry_label == _type):
                 labels.append(wid - self._nwords)
-            if (len(words) > const_max_line_size) and (Args.const_model_sup != self._args._model):
+            if (len(words) > const_max_line_size) and (ft.fasttext.args.const_model_sup != self._args._model):
                 break
             if (const_eow == token):
                 break
         return ntokens
 
     def _discard(self, wid, p):
-        if (Args.const_model_sup == self._args._model):
+        """
+        _discard
+        TODO
+        """
+        if (ft.fasttext.args.const_model_sup == self._args._model):
             return False
         return p > self._pdiscard[wid]
 
     def get_counts(self, _type):
+        """
+        get_counts
+        """
         counts_vec = list()
         for item in self._words:
             if (item._type == _type):
@@ -215,18 +268,28 @@ class Dictionary(object):
         return counts_vec
 
     def add_ngrams(self, line_vec, n):
+        """
+        add_ngrams
+        """
         l_line = len(line_vec)
         for i in range(l_line):
             h = line_vec[i]
             for j in range(i+1, l_line):
                 if (j >= i+n):
                     break
-                h = h * 116049371 + line[j]
-                line.append(self._nwords + (h % self._args._bucket))
+                h = h * 116049371 + line_vec[j]
+                line_vec.append(self._nwords + (h % self._args._bucket))
 
     def print_dict(self):
+        """
+        print_dict
+        """
         print ("the size is %d" % self._size)
         print ("the nwords is %d" % self._nwords)
         print ("the nlabels is %d" % self._nlabels)
         print ("the ntokens is %d" % self._ntokens)
         return
+
+
+if __name__ == "__main__":
+    print "This is dictionary"

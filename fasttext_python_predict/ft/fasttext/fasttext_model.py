@@ -10,6 +10,7 @@
 
 import math
 from ft.fasttext.args import Args
+import ft.fasttext
 
 const_sigmoid_table_size = 512
 const_max_sigmoid = 8
@@ -24,13 +25,22 @@ class Node(object):
     _binary = 0
 
     def __init__(self):
+        """
+        __init__
+        """
         return
 
     def __del__(self):
+        """
+        __del__
+        """
         return
 
 
 def _vec_dot(vec_l, vec_r):
+    """
+    _vec_dot
+    """
     if (len(vec_l) != len(vec_r)):
         return -1
     d = 0.0
@@ -40,6 +50,9 @@ def _vec_dot(vec_l, vec_r):
 
 
 def _mat_vec_dot(mat, vec):
+    """
+    _mat_vec_dot
+    """
     mat_len = len(mat)
     vec_len = len(vec)
     if ((mat_len / vec_len) * vec_len != mat_len):
@@ -77,11 +90,25 @@ class FastTextModel(object):
     _negatives = list()
 
     def __init__(self, wi, wo, args, wi_shape, wo_shape):
+        """
+        __init__
+        """
         self._wi = wi
         self._wo = wo
         self._args = args
+        self._wi_shape = wi_shape
+        self._wo_shape = wo_shape
+
+    def __del__(self):
+        """
+        __del__
+        """
+        return
 
     def _init_sigmoid(self):
+        """
+        _init_sigmoid
+        """
         self._const_sigmoid_table = [0 for i in range(const_sigmoid_table_size + 1)]
         for i in range(const_sigmoid_table_size + 1):
             x = float(i * 2 * const_max_sigmoid) / const_sigmoid_table_size - float(const_max_sigmoid)
@@ -89,6 +116,9 @@ class FastTextModel(object):
         return
 
     def _init_log(self):
+        """
+        _init_log
+        """
         self._const_log_table = [0 for i in range(const_log_table_size + 1)]
         for i in range(const_log_table_size):
             x = (float(i) + 1e5) / const_log_table_size
@@ -96,6 +126,9 @@ class FastTextModel(object):
         return
 
     def sigmoid(self, x):
+        """
+        sigmoid
+        """
         if (x < -const_max_sigmoid):
             return 0.0
         elif(x > const_max_sigmoid):
@@ -106,12 +139,18 @@ class FastTextModel(object):
         return 0.0
 
     def log(self, x):
+        """
+        log
+        """
         if (x > 1.0):
             return 0.0
         i = int (x * const_log_table_size)
         return self._const_log_table[i]
 
     def _init_table_negatives(self, _counts_vec):
+        """
+        _init_table_negatives
+        """
         z = 0.0
         for i in len(_counts_vec):
             z += math.pow(_counts_vec[i], 0.5)
@@ -121,14 +160,20 @@ class FastTextModel(object):
                 self._negatives.append(i)
 
     def set_target_counts(self, _counts_vec):
+        """
+        set_target_counts
+        """
         if (len(_counts_vec) != self._osz):
             return -1
-        if (Args.const_loss_ns == self._args._loss):
+        if (ft.fasttext.args.const_loss_ns == self._args._loss):
             self._init_table_negatives(_counts_vec)
-        if (Args.const_loss_hs == self._args._loss):
+        if (ft.fasttext.args.const_loss_hs == self._args._loss):
             self._build_tree(_counts_vec)
 
     def _build_tree(self, _count_vec):
+        """
+        _build_tree
+        """
         self._tree = [Node() for i in range(2 * self._osz - 1)]
         for i in range(2 * self._osz -1):
             self._tree[i]._parent = -1
@@ -170,48 +215,60 @@ class FastTextModel(object):
         return
 
     def _dfs(self, _k, _node, _score, _heap_vec, _hidden_vec):
+        """
+        _dfs
+        """
         if (_k == len(_heap_vec)) and (_score < _heap_vec[0][0]):
             return
         if (-1 == self._tree[_node]._left) and (-1 == self._tree[_node]._right):
             _heap_vec.append((_score, _node))
             sorted(_heap_vec, key=lambda t: t[0])
             # delete the minimum
-            if (k < len(_heap_vec)):
+            if (_k < len(_heap_vec)):
                 del(_heap_vec[0])
             return 
         l_hidden = len(_hidden_vec)
         i = _node - self._osz
         mul_res = _vec_dot(self._wo[i*l_hidden:(i+1)*l_hidden], _hidden_vec)
-        f = sigmoid(mul_res)
-        self._dfs(k, self._tree[_node]._left, _score + self.log(1.0 - f), _heap_vec, _hidden_vec)
-        self._dfs(k, self._tree[_node]._right, _score + self.log(f), _heap_vec, _hidden_vec)
+        f = self.sigmoid(mul_res)
+        self._dfs(_k, self._tree[_node]._left, _score + self.log(1.0 - f), _heap_vec, _hidden_vec)
+        self._dfs(_k, self._tree[_node]._right, _score + self.log(f), _heap_vec, _hidden_vec)
         return
 
     def _compute_output_softmax(self, _hidden_vec, _output_vec):
+        """
+        _compute_output_softmax
+        """
         _output_vec = _mat_vec_dot(self._wo, _hidden_vec)
-        _max = output[0]
+        _max = _output_vec[0]
         z = 0.0
-        for i in range(_osz):
-            _max = max(output[i], _max)
-        for i in range(_osz):
-            output[i] = math.exp(output[i] - _max)
-            z += output[i]
-        for i in range(_osz):
-            output[i] /= z
+        for i in range(self._osz):
+            _max = max(_output_vec[i], _max)
+        for i in range(self._osz):
+            _output_vec[i] = math.exp(_output_vec[i] - _max)
+            z += _output_vec[i]
+        for i in range(self._osz):
+            _output_vec[i] /= z
         return _output_vec
 
     def _find_kbest(self, _k, _heap_vec, _hidden_vec, _output_vec):
+        """
+        _find_kbest
+        """
         self._compute_output_softmax(_hidden_vec, _output_vec)
         for i in range(self._osz):
-            if (k == len(_heap_vec)) and (self.log(_output_vec[i]) < _heap_vec[0][0]):
+            if (_k == len(_heap_vec)) and (self.log(_output_vec[i]) < _heap_vec[0][0]):
                 continue
             _heap_vec.append((self.log(_output_vec[i]), i))
             sorted(_heap_vec, key=lambda t: t[0])
-            if (k < len(_heap_vec)):
+            if (_k < len(_heap_vec)):
                 del(_heap_vec[0])
         return
 
     def _compute_hidden(self, _input_vec, _hidden_vec):
+        """
+        _compute_hidden
+        """
         if (self._hsz != len(_hidden_vec)):
             return -1
         #_hidden_vec = [0.0 for i in range(self._hsz)]
@@ -225,10 +282,17 @@ class FastTextModel(object):
         return
   
     def predict_prob(self, _input_vec, _k, _heap_vec, _hidden_vec, _output_vec):
+        """
+        predict_prob
+        """
         _heap_vec = [(0.0, 0) for i in range(_k+1)]
         self._compute_hidden(_input_vec, _hidden_vec)
-        if (Args.const_loss_hs == self._args._loss):
+        if (ft.fasttext.args.const_loss_hs == self._args._loss):
             self._dfs(_k, 2*self._osz-2, 0.0, _heap_vec, _hidden_vec)
         else:
-            self.find_kbest(k, _heap_vec, _hidden_vec, _output_vec)
-        sorted(heap, key=lambda t: t[0])
+            self.find_kbest(_k, _heap_vec, _hidden_vec, _output_vec)
+        sorted(_heap_vec, key=lambda t: t[0])
+
+
+if __name__ == "__main__":
+    print "This is fasttext_model"
