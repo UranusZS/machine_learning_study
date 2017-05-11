@@ -85,6 +85,7 @@ class FMModel(object):
         if not line:
             return w0, wi, wjf, -3
         k0, k1, f_num, k = line.strip().split("\t")
+        #line = fp_model.readline()
         while line:
             if ("1" == k0):
                 line = fp_model.readline()
@@ -108,8 +109,9 @@ class FMModel(object):
                 line_arr = line.strip().split()
                 l = min(int(k), len(line_arr))
                 for f in range(int(l)):
-                    tmp[f] = float(line_arr[l])
+                    tmp[f] = float(line_arr[f])
                 wjf.append(tmp)
+            break
         self._k0 = int(k0)
         self._k1 = int(k1)
         self._f_num = int(f_num)
@@ -130,13 +132,44 @@ class FMModel(object):
         _sum_sqr = [0.0 for f in range(self._k)]
         for j in range(self._f_num):
             for f in range(self._k):
-                _d = self._wjf[j][f] * _feature_dict.get(j) 
+                _d = self._wjf[j][f] * _feature_dict.get(j, 0) 
                 _sum[f] += _d 
-                _sum_sqr += _d * _d
+                _sum_sqr[f] += _d * _d
         for f in range(self._k):
             result += 0.5 * ((_sum[f] * _sum[f]) - _sum_sqr[f])
         return result
 
 
+def main(model_file, test_file):
+    """
+    main test
+    """
+    fm = FMModel(13, model_file)
+    fm.load_model(model_file)
+    fp = open(test_file)
+    correct_num = 0
+    total_num = 0
+    for line in fp.readlines():
+        line_arr = line.strip().split()
+        label = line_arr[0].strip()
+        if ("+1" == label):
+            label = 1
+        else:
+            label = -1
+        feat_dict = dict()
+        for i in range(1, len(line_arr)):
+            id, val = line_arr[i].strip().split(":")
+            feat_dict[int(id)] = float(val)
+        #print feat_dict
+        score = fm.predict(feat_dict)
+        print label, score
+        total_num += 1
+        if (label > 0) and (score > 0.0):
+            correct_num += 1
+        if (label < 0) and (score < 0.0):
+            correct_num += 1
+    print correct_num, total_num, float(correct_num) / total_num
+            
 if __name__ == "__main__":
     print "This is libfm_model"
+    main("fm.model", "heart_scale")
