@@ -8,6 +8,7 @@
     > Created Time: 2017年05月09日 星期二 22时17分11秒
 '''
 import os
+import math
 
 '''
 inference of the fm learning by sgd or als
@@ -126,18 +127,30 @@ class FMModel(object):
         """
         result = 0.0
         result += self._w0
-        for i in range(len(self._wi)):
-            result += self._wi[i] * _feature_dict.get(i, 0)
+        for (key, value) in _feature_dict.items():
+            result += self._wi[int(key)] * float(value)
         _sum = [0.0 for f in range(self._k)]
         _sum_sqr = [0.0 for f in range(self._k)]
-        for j in range(self._f_num):
+        for (key, value) in _feature_dict.items():
+            j = int(key)
             for f in range(self._k):
-                _d = self._wjf[j][f] * _feature_dict.get(j, 0) 
-                _sum[f] += _d 
+                _d = self._wjf[j][f] * float(value)
+                _sum[f] += _d
                 _sum_sqr[f] += _d * _d
         for f in range(self._k):
             result += 0.5 * ((_sum[f] * _sum[f]) - _sum_sqr[f])
         return result
+
+    def predict_prob(self, _feature_dict):
+        """
+        predict_prob
+        """
+        result = self.predict(_feature_dict)
+        if (result > 36):
+            return 1.0
+        if (result < -36):
+            return 0.0
+        return 1.0 / (1.0 + math.exp(-result))
 
 
 def main(model_file, test_file):
@@ -173,3 +186,4 @@ def main(model_file, test_file):
 if __name__ == "__main__":
     print "This is libfm_model"
     main("fm.model", "heart_scale")
+
