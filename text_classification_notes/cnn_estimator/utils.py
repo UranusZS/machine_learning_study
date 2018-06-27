@@ -49,11 +49,11 @@ def extract_tf_config():
     print(json.loads(os.environ["TF_CONFIG"]))
 
 
-def write_predicts_to_file(predicts, filename, separator="\t"):
+def write_predicts_to_file(predicts, fp, separator="\t"):
     """
     write_predicts_to_file
     """
-    with open(filename, "w") as fp:
+    if fp:
         # print(type(predicts)) # generator  # {'prob': array([0., 0., 0., 1., 0.], dtype=float32), 'class': 3, 'id': 'c21zX3Ntc19zbXNfc21zX7vwwQqcXsW0VfyEJSuhsxs='}
         for item in predicts:
             out_str = item['id']
@@ -82,7 +82,24 @@ def train_and_evaluate(classifier, train_filenames, test_filenames, max_steps=40
         print("{0}: {1:f}".format(key, value))
 
     if predict_result_file is not None:
-        # predicting
-        predicts = classifier.predict(input_fn=lambda: classifier_input_fn(test_filenames, repeat_num=1))
-        write_predicts_to_file(predicts, predict_result_file)
+        with open(predict_result_file, "w") as fp:
+            # predicting
+            predicts = classifier.predict(input_fn=lambda: classifier_input_fn(test_filenames, repeat_num=1))
+            write_predicts_to_file(predicts, fp)
+
+
+def predict(classifier, test_filenames, predict_result_file):
+    """
+    predict
+    """
+    def classifier_input_fn(filenames, shuffle=False, batch_size=batch_size, repeat_num=10):
+        return gen_dataset(filenames, shuffle, batch_size, repeat_num)
+    if predict_result_file is not None:
+        with open(predict_result_file, "w") as fp:
+            # predicting
+            predicts = classifier.predict(input_fn=lambda: classifier_input_fn(test_filenames, repeat_num=1))
+            write_predicts_to_file(predicts, fp)
+
+
+
 

@@ -78,14 +78,25 @@ def cnn_model(features, labels, mode, params={}):
 
     predicted_classes = tf.argmax(logits, 1)
     if mode == tf.estimator.ModeKeys.PREDICT:
+        prob = tf.nn.softmax(logits)
+        # make sure to include export_outputs when mode is predict, for savedmodel purposes
+        export_outputs = {
+                    'predict_output': tf.estimator.export.PredictOutput(
+                            {
+                                'pred_output_classes': predicted_classes,
+                                "probabilities": prob
+                            }
+                        )
+                }
         return tf.estimator.EstimatorSpec(
                     mode=mode,
                     predictions={
                         'class': predicted_classes,
                         'id': features[id_key],
                         #'label': labels,
-                        'prob': tf.nn.softmax(logits)
-                })
+                        'prob': prob 
+                    },
+                    export_outputs=export_outputs)
 
     # calculate loss
     loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
@@ -111,5 +122,25 @@ def cnn_model(features, labels, mode, params={}):
 
     return tf.estimator.EstimatorSpec(
                 mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+
+
+def export_model(classifier, sequence_len=10000, export_dir="./export_model"):
+    """
+    export_model
+    """
+    # for exporting saved model
+    ID = "id"
+    WORDS = "words"
+    feature_placeholders = {
+                ID: tf.placeholder(tf.string, [None], name=ID),
+                WORDS: tf.placeholder(tf.int32, [None, sequence_len], name=WORDS)
+            }
+    serving_input_fn = tf.estimator.export.build_raw_serving_input_receiver_fn(
+            feature_placeholders)
+    classifier.export_savedmodel(
+            export_dir,
+            serving_input_fn)
+
+
 
 

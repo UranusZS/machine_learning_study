@@ -18,12 +18,15 @@ import tensorflow as tf
 from data import extract_input_files
 from utils import train_and_evaluate
 from cnn_model import cnn_model
+from cnn_model import export_model
 
 # tensorflow settings
 tf.logging.set_verbosity(tf.logging.INFO)  
 
 # distribution
 tf.flags.DEFINE_boolean("is_distribution", False, "whether to distribution")
+tf.flags.DEFINE_boolean("to_predict", False, "whether to just do predict or do training")
+tf.flags.DEFINE_string("model_dir", "hdfs://xxx/model", "the model dir, when do distributed training hdfs dir required!")
 
 # Data params
 tf.flags.DEFINE_integer("vocab_size", 323310, ("Dimensionality of vocabulary"
@@ -89,21 +92,39 @@ def main(_):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
+    model_dir = "./model"
     if FLAGS.is_distribution:
     	print("------ using distributed cluster config ------")
     	extract_tf_config()
+        model_dir = FLAGS.model_dir
+
 
     # session config
-    session_config = tf.ConfigProto(log_device_placement=True)
-    session_config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    if FLAGS.to_predict:
+        session_config = tf.ConfigProto(
+                            device_count={"CPU": 1},
+                            log_device_placement=True)
+        session_config.intra_op_parallelism_threads = 4
+        session_config.inter_op_parallelism_threads = 4
+    else:
+        session_config = tf.ConfigProto(log_device_placement=True)
+        session_config.gpu_options.per_process_gpu_memory_fraction = 0.5
+
     # build the model
-    run_config = tf.estimator.RunConfig(model_dir="./board", save_checkpoints_steps=FLAGS.checkpoint_every, keep_checkpoint_max=FLAGS.num_checkpoints)
+    run_config = tf.estimator.RunConfig(
+                    model_dir="./board", 
+                    save_checkpoints_steps=FLAGS.checkpoint_every, 
+                    keep_checkpoint_max=FLAGS.num_checkpoints)
     #run_config = tf.estimator.RunConfig().replace(session_config=session_config)
     #run_config = run_config.replace(keep_checkpoint_max=3)
 
     classifier = tf.estimator.Estimator(model_fn=cnn_model, config=run_config, params=params)
     #train_and_evaluate(classifier)
-    train_and_evaluate(classifier, train_filenames, test_filenames, predict_result_file=predict_file, max_steps=100)
+    if FLAGS.to_predict:
+        predict(classifier, test_filenames, predict_result_file=predict_file)
+    else:
+        train_and_evaluate(classifier, train_filenames, test_filenames, predict_result_file=predict_file, max_steps=100)
+        export_model(classifier, params["sequence_len"], "./export_model")
 
 
 if __name__ == "__main__":
