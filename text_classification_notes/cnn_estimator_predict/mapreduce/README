@@ -1,0 +1,10 @@
+export_model.zip in this directory, for maybe the savedmodel loader not support loading from hdfs
+
+Archive:  export_model.zip
+   export_model/
+   export_model/variables/
+   export_model/variables/variables.data-00000-of-00001  
+   export_model/variables/variables.index  
+   export_model/saved_model.pb
+
+run using command: sh run.sh 20180606

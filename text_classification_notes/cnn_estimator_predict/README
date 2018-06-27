@@ -1,0 +1,3 @@
+this is the prediction program for tensorflow cnn text classification in tf.estimator by exported savedmodel  
+ 
+you need to first have the anaconda.zip for python environment for tensorflow
