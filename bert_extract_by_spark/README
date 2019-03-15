@@ -1,0 +1,4 @@
+# this is a spark program for extract bert layer features using pre-train bert models    
+# notes:  
+  - not very fast perhaps due to using tf.data.Dataset.from_generator and only CPU  
+  - can make little modification to change this program to write to tfrecords, and then use GPU to predict   
