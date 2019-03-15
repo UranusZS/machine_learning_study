@@ -16,5 +16,7 @@ ftrl_proximal       -> ftrl proximal algorithm, a ref
 email_spam          -> a naive bayes algorithm used for email spam detection    
 word2vec_comment    -> a comment in Chinese for word2vec    
 text_classification_notes    -> notes for text classification with tensorflow using cnn or cnn + rnn  
+auc                 -> caculate auc by spark    
+wide_deep           -> wide & deep    
     
     
